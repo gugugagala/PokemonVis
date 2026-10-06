@@ -169,12 +169,8 @@ function inlineStyles(srcRoot, dstRoot) {
     }
 }
 
-PV.exportPNG = function () {
-    const svg = document.querySelector(".vis-chart svg");
-    if (!svg) {
-        PV.toast("无可导出内容");
-        return;
-    }
+/* 将当前 SVG 栅格化为 canvas（inlines 样式后经 Image 绘制），callback 收到 canvas 或 null */
+function rasterizeSVG(svg, scale, callback) {
     const width = svg.width.baseVal.value || svg.clientWidth;
     const height = svg.height.baseVal.value || svg.clientHeight;
 
@@ -187,23 +183,101 @@ PV.exportPNG = function () {
     const serialized = new XMLSerializer().serializeToString(clone);
     const img = new Image();
     img.onload = () => {
-        const scale = 2;
         const canvas = document.createElement("canvas");
-        canvas.width = width * scale;
-        canvas.height = height * scale;
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
         const ctx = canvas.getContext("2d");
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.setTransform(scale, 0, 0, scale, 0, 0);
         ctx.drawImage(img, 0, 0, width, height);
+        callback(canvas);
+    };
+    img.onerror = () => callback(null);
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(serialized);
+}
+
+PV.exportPNG = function () {
+    const svg = document.querySelector(".vis-chart svg");
+    if (!svg) {
+        PV.toast("无可导出内容");
+        return;
+    }
+    rasterizeSVG(svg, 2, canvas => {
+        if (!canvas) {
+            PV.toast("PNG 导出失败");
+            return;
+        }
         canvas.toBlob(blob => {
             download("pokemonvis-" + PV.currentName + ".png", "image/png", blob);
             PV.toast("PNG 已导出");
         });
-    };
-    img.onerror = () => PV.toast("PNG 导出失败");
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(serialized);
+    });
 };
+
+/* ---------------------------- 分享预览卡片 ---------------------------- */
+
+let shareOverlay;
+
+function buildShareOverlay() {
+    shareOverlay = document.createElement("div");
+    shareOverlay.className = "share-overlay";
+    shareOverlay.setAttribute("role", "dialog");
+    shareOverlay.setAttribute("aria-label", "分享预览");
+
+    const card = document.createElement("div");
+    card.className = "share-card";
+    card.innerHTML =
+        '<button type="button" class="share-close" aria-label="关闭分享预览">✕</button>' +
+        '<div class="share-card-title">分享预览</div>' +
+        '<img class="share-thumb" alt="当前图表缩略图" />' +
+        '<div class="share-url-row">' +
+        '<input class="share-url" type="text" readonly aria-label="分享链接" />' +
+        '<button type="button" class="tool-btn share-copy">复制</button>' +
+        '</div>';
+    shareOverlay.appendChild(card);
+
+    shareOverlay.addEventListener("click", e => {
+        if (e.target === shareOverlay) hideShare();
+    });
+    card.querySelector(".share-close").addEventListener("click", hideShare);
+    card.querySelector(".share-copy").addEventListener("click", () => {
+        const url = card.querySelector(".share-url").value;
+        const done = () => PV.toast("链接已复制");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done).catch(() => legacyCopy(url, done));
+        } else {
+            legacyCopy(url, done);
+        }
+    });
+    document.body.appendChild(shareOverlay);
+}
+
+function hideShare() {
+    if (shareOverlay) shareOverlay.style.display = "none";
+}
+
+PV.showShare = function () {
+    PV.syncHash();
+    if (!shareOverlay) buildShareOverlay();
+    const card = shareOverlay.querySelector(".share-card");
+    shareOverlay.style.display = "flex";
+    card.querySelector(".share-url").value = location.href;
+
+    const thumb = card.querySelector(".share-thumb");
+    const svg = document.querySelector(".vis-chart svg");
+    if (svg) {
+        const width = svg.width.baseVal.value || svg.clientWidth || 1;
+        rasterizeSVG(svg, Math.min(1, 360 / width), canvas => {
+            thumb.src = canvas ? canvas.toDataURL("image/png") : "";
+        });
+    }
+    card.querySelector(".share-close").focus();
+};
+
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape") hideShare();
+});
 
 PV.renderTools = function (menu) {
     const tools = document.createElement("div");
@@ -212,8 +286,8 @@ PV.renderTools = function (menu) {
     const copy = document.createElement("button");
     copy.type = "button";
     copy.className = "tool-btn";
-    copy.textContent = "复制分享链接";
-    copy.addEventListener("click", PV.copyShareLink);
+    copy.textContent = "分享 / 复制链接";
+    copy.addEventListener("click", PV.showShare);
     tools.appendChild(copy);
 
     const csv = document.createElement("button");
