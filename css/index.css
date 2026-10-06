@@ -28,7 +28,7 @@ body {
 }
 
 .nav-item {
-    width: calc(var(--nav-width) / 5);
+    width: calc(var(--nav-width) / 6);
     height: calc(var(--nav-height) * 0.8);
     margin: calc(var(--nav-height) * 0.1);
     display: -webkit-flex;
@@ -188,8 +188,20 @@ body {
 .scatter-svg,
 .heatmap-svg,
 .evolution-svg,
-.moves-svg {
+.moves-svg,
+.parallel-svg {
     display: block;
+}
+
+/* 平行坐标 */
+.pc-line {
+    opacity: 0.12;
+    transition: opacity 0.15s;
+}
+
+.parallel-tick {
+    font-size: 10px;
+    fill: #9aa5a2;
 }
 
 .axis-label {
