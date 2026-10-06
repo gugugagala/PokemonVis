@@ -107,16 +107,62 @@ body {
     position: absolute;
     opacity: 0;
     pointer-events: none;
-    padding: 8px 12px;
+    min-width: 130px;
+    padding: 10px 12px;
     background: #ffffff;
     color: #154360;
     font-size: 12px;
     line-height: 1.5;
-    text-align: center;
+    text-align: left;
     white-space: nowrap;
     border-radius: 6px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
     z-index: 10;
+}
+
+.tooltip-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.tooltip-types {
+    margin-bottom: 6px;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    margin-right: 4px;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.tooltip-total {
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tooltip-stats {
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 14px;
+}
+
+.stat-row {
+    display: contents;
+}
+
+.stat-row span {
+    color: #666666;
+}
+
+.stat-row b {
+    text-align: right;
 }
 
 /* 按钮 */

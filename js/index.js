@@ -159,7 +159,7 @@ function drawLegend(svg) {
         .attr("class", "legend-text")
         .attr("x", 15)
         .attr("y", 10)
-        .text(d => d.charAt(0) + d.slice(1).toLowerCase());
+        .text(d => typeLabel(d));
 }
 
 function drawAxes(plot, xScale, yScale) {
@@ -216,17 +216,24 @@ function drawDots(plot, xScale, yScale, rScale, data) {
 
 /* ---------------------------- Tooltip ---------------------------- */
 
+function typeLabel(type) {
+    return type.charAt(0) + type.slice(1).toLowerCase();
+}
+
 function tooltipHtml(d) {
-    return (
-        "#" + d.id + " " + d.name + "<br/>" +
-        "Total: " + d.total + "<br/>" +
-        "HP: " + d.hp + "<br/>" +
-        "Attack: " + d.attack + "<br/>" +
-        "Defense: " + d.defense + "<br/>" +
-        "Sp. Atk: " + d.spAtk + "<br/>" +
-        "Sp. Def: " + d.spDef + "<br/>" +
-        "Speed: " + d.speed
-    );
+    const badges = d.types
+        .map(t => `<span class="type-badge" style="background:${TYPE_COLORS[t] || FALLBACK_COLOR}">${typeLabel(t)}</span>`)
+        .join("");
+
+    const stats = [
+        ["HP", d.hp], ["Attack", d.attack], ["Defense", d.defense],
+        ["Sp. Atk", d.spAtk], ["Sp. Def", d.spDef], ["Speed", d.speed]
+    ].map(([k, v]) => `<div class="stat-row"><span>${k}</span><b>${v}</b></div>`).join("");
+
+    return `<div class="tooltip-name">#${d.id} ${d.name}</div>` +
+        `<div class="tooltip-types">${badges}</div>` +
+        `<div class="tooltip-total">Total <b>${d.total}</b></div>` +
+        `<div class="tooltip-stats">${stats}</div>`;
 }
 
 function showTooltip(d) {
