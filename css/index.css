@@ -89,7 +89,17 @@ body {
 }
 
 .dot {
+    opacity: 0.75;
     transition: opacity 0.2s;
+}
+
+.dot:hover {
+    opacity: 1;
+}
+
+.legend-text {
+    font-size: 11px;
+    fill: #444444;
 }
 
 /* Tooltip */

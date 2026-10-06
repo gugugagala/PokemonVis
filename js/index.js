@@ -1,17 +1,34 @@
 /* PokemonVis —— 宝可梦属性散点图可视化主逻辑 */
 
 const CONFIG = {
-    margin: { top: 50, right: 40, bottom: 80, left: 70 },
+    margin: { top: 50, right: 40, left: 70 },
     pointRadius: 5,
     pointColor: "#568100",
     transition: 300
 };
+
+/* 宝可梦官方属性配色 */
+const TYPE_COLORS = {
+    NORMAL: "#A8A77A", FIRE: "#EE8130", WATER: "#6390F0", ELECTRIC: "#F7D02C",
+    GRASS: "#7AC74C", ICE: "#96D9D6", FIGHTING: "#C22E28", POISON: "#A33EA1",
+    GROUND: "#E2BF65", FLYING: "#A98FF3", PSYCHIC: "#F95587", BUG: "#A6B91A",
+    ROCK: "#B6A136", GHOST: "#735797", DRAGON: "#6F35FC", DARK: "#705746",
+    STEEL: "#B7B7CE", FAIRY: "#D685AD"
+};
+
+const TYPE_ORDER = Object.keys(TYPE_COLORS);
+const FALLBACK_COLOR = "#9e9e9e";
+
+const LEGEND_ITEM_W = 78;
+const LEGEND_ITEM_H = 20;
 
 const state = {
     width: 0,
     height: 0,
     innerW: 0,
     innerH: 0,
+    marginBottom: 80,
+    legend: { cols: 1, rows: 1 },
     svg: null,
     tooltip: null,
     pokemon: [],
@@ -73,7 +90,14 @@ function measure() {
     state.width = el.clientWidth;
     state.height = el.clientHeight;
     state.innerW = Math.max(0, state.width - CONFIG.margin.left - CONFIG.margin.right);
-    state.innerH = Math.max(0, state.height - CONFIG.margin.top - CONFIG.margin.bottom);
+
+    /* 图例按可用宽度自动换行，底部留白随之增长 */
+    const legendCols = Math.max(1, Math.floor(state.innerW / LEGEND_ITEM_W));
+    const legendRows = Math.ceil(TYPE_ORDER.length / legendCols);
+    state.legend = { cols: legendCols, rows: legendRows };
+    state.marginBottom = 56 + legendRows * LEGEND_ITEM_H;
+
+    state.innerH = Math.max(0, state.height - CONFIG.margin.top - state.marginBottom);
 }
 
 /* ------------------------------ 绘制 ------------------------------ */
@@ -104,6 +128,37 @@ function draw() {
 
     drawAxes(plot, xScale, yScale);
     drawDots(plot, xScale, yScale, data);
+    drawLegend(svg);
+}
+
+function colorFor(d) {
+    return TYPE_COLORS[d.types[0]] || FALLBACK_COLOR;
+}
+
+function drawLegend(svg) {
+    const cols = state.legend.cols;
+    const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(${CONFIG.margin.left},${CONFIG.margin.top + state.innerH + 50})`);
+
+    const items = legend.selectAll("g")
+        .data(TYPE_ORDER)
+        .enter()
+        .append("g")
+        .attr("transform", (d, i) =>
+            `translate(${(i % cols) * LEGEND_ITEM_W},${Math.floor(i / cols) * LEGEND_ITEM_H})`);
+
+    items.append("circle")
+        .attr("cx", 5)
+        .attr("cy", 6)
+        .attr("r", 5)
+        .attr("fill", d => TYPE_COLORS[d]);
+
+    items.append("text")
+        .attr("class", "legend-text")
+        .attr("x", 15)
+        .attr("y", 10)
+        .text(d => d.charAt(0) + d.slice(1).toLowerCase());
 }
 
 function drawAxes(plot, xScale, yScale) {
@@ -128,7 +183,7 @@ function drawAxes(plot, xScale, yScale) {
         .attr("class", "axis-title")
         .attr("text-anchor", "middle")
         .attr("x", state.innerW / 2)
-        .attr("y", state.innerH + CONFIG.margin.bottom - 30)
+        .attr("y", state.innerH + 28)
         .text("HP");
 }
 
@@ -141,7 +196,9 @@ function drawDots(plot, xScale, yScale, data) {
         .attr("cx", d => xScale(xAccessor(d)))
         .attr("cy", d => yScale(yAccessor(d)))
         .attr("r", CONFIG.pointRadius)
-        .attr("fill", CONFIG.pointColor)
+        .attr("fill", d => colorFor(d))
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 0.5)
         .style("cursor", "pointer")
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)
