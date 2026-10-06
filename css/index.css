@@ -72,6 +72,23 @@ body {
     display: block;
 }
 
+/* 网格线（置于坐标轴之下） */
+.grid .domain {
+    display: none;
+}
+
+.grid line {
+    stroke: #e6e6e6;
+    stroke-dasharray: 2, 2;
+    shape-rendering: crispEdges;
+}
+
+.chart-title {
+    font-size: 16px;
+    font-weight: 600;
+    fill: #2c3e50;
+}
+
 /* 坐标轴 */
 .axis path,
 .axis line {

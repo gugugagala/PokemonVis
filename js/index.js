@@ -127,9 +127,30 @@ function draw() {
         .attr("class", "plot")
         .attr("transform", `translate(${CONFIG.margin.left},${CONFIG.margin.top})`);
 
+    drawGrid(plot, xScale, yScale);
     drawAxes(plot, xScale, yScale);
     drawDots(plot, xScale, yScale, rScale, data);
     drawLegend(svg);
+    drawTitle(svg);
+}
+
+function drawTitle(svg) {
+    svg.append("text")
+        .attr("class", "chart-title")
+        .attr("x", CONFIG.margin.left)
+        .attr("y", 26)
+        .text("宝可梦种族值分布（HP × Speed）");
+}
+
+function drawGrid(plot, xScale, yScale) {
+    plot.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(0,${state.innerH})`)
+        .call(d3.axisBottom(xScale).tickSize(-state.innerH).tickFormat(""));
+
+    plot.append("g")
+        .attr("class", "grid")
+        .call(d3.axisLeft(yScale).tickSize(-state.innerW).tickFormat(""));
 }
 
 function colorFor(d) {
@@ -191,14 +212,14 @@ function drawAxes(plot, xScale, yScale) {
 function drawDots(plot, xScale, yScale, rScale, data) {
     const radius = d => rScale(d.total);
 
-    plot.selectAll(".dot")
+    const dots = plot.selectAll(".dot")
         .data(data, d => d.id + "|" + d.name)
         .enter()
         .append("circle")
         .attr("class", "dot")
         .attr("cx", d => xScale(xAccessor(d)))
         .attr("cy", d => yScale(yAccessor(d)))
-        .attr("r", radius)
+        .attr("r", 0)
         .attr("fill", d => colorFor(d))
         .attr("stroke", "#ffffff")
         .attr("stroke-width", 0.5)
@@ -212,6 +233,11 @@ function drawDots(plot, xScale, yScale, rScale, data) {
             d3.select(this).attr("r", radius(d));
             hideTooltip();
         });
+
+    dots.transition()
+        .duration(CONFIG.transition)
+        .ease(d3.easeCubicOut)
+        .attr("r", radius);
 }
 
 /* ---------------------------- Tooltip ---------------------------- */
