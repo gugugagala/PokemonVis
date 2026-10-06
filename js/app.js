@@ -114,6 +114,39 @@ PV.copyShareLink = function () {
     }
 };
 
+function csvCell(value) {
+    if (value === null || value === undefined) return "";
+    const s = String(value);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function download(filename, mime, data) {
+    const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+PV.exportCSV = function () {
+    const view = PV.current;
+    const rows = view && view.exportData ? view.exportData() : null;
+    if (!rows || !rows.length) {
+        PV.toast("当前视图暂无可导出的数据");
+        return;
+    }
+    const header = Object.keys(rows[0]);
+    const lines = [header.join(",")].concat(
+        rows.map(row => header.map(h => csvCell(row[h])).join(","))
+    );
+    download("pokemonvis-" + PV.currentName + ".csv", "text/csv;charset=utf-8", "\ufeff" + lines.join("\n"));
+    PV.toast("CSV 已导出");
+};
+
 PV.renderTools = function (menu) {
     const tools = document.createElement("div");
     tools.className = "menu-tools";
@@ -124,6 +157,13 @@ PV.renderTools = function (menu) {
     copy.textContent = "复制分享链接";
     copy.addEventListener("click", PV.copyShareLink);
     tools.appendChild(copy);
+
+    const csv = document.createElement("button");
+    csv.type = "button";
+    csv.className = "tool-btn";
+    csv.textContent = "导出 CSV";
+    csv.addEventListener("click", PV.exportCSV);
+    tools.appendChild(csv);
 
     menu.appendChild(tools);
 };

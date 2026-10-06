@@ -216,5 +216,12 @@ PV.views.typechart = (function () {
             .text("点击矩阵单元格查看倍率；在散点图选中宝可梦可自动高亮其攻击属性。");
     }
 
-    return { label: "属性克制", render, menu };
+    function exportData() {
+        return PV.state.typechart.map(r => ({
+            attack: r.Attack, defense: r.Defense,
+            effectiveness: r.Effectiveness, multiplier: r.Multiplier
+        }));
+    }
+
+    return { label: "属性克制", render, menu, exportData };
 })();

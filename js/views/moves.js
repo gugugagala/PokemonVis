@@ -202,5 +202,12 @@ PV.views.moves = (function () {
             .text("在散点图选中宝可梦后勾选上方选项，可联动查看其属性技能。");
     }
 
-    return { label: "技能", render, menu };
+    function exportData() {
+        return filtered().map(m => ({
+            name: m.name, type: m.type, category: m.category,
+            power: m.power, accuracy: m.accuracy, pp: m.pp, effect: m.effect
+        }));
+    }
+
+    return { label: "技能", render, menu, exportData };
 })();

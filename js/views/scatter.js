@@ -252,5 +252,15 @@ PV.views.scatter = (function () {
             .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击散点或图例可联动其他视图。");
     }
 
-    return { label: "散点图", render, menu };
+    function exportData() {
+        const sel = PV.selection.type;
+        const rows = sel === "ALL" ? PV.state.pokemon : PV.state.pokemon.filter(p => p.types.includes(sel));
+        return rows.map(p => ({
+            id: p.id, name: p.name, type: p.types.join("/"),
+            total: p.total, hp: p.hp, attack: p.attack, defense: p.defense,
+            spAtk: p.spAtk, spDef: p.spDef, speed: p.speed
+        }));
+    }
+
+    return { label: "散点图", render, menu, exportData };
 })();

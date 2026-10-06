@@ -250,5 +250,20 @@ PV.views.evolution = (function () {
         root.append("div").attr("class", "menu-hint").text("提示：点击任意进化节点可切换家族。");
     }
 
-    return { label: "进化链", render, menu };
+    function exportData() {
+        if (!selected) return [];
+        const { children, parentOf } = buildGraph(PV.state.evolution);
+        const { set } = familyOf(selected, children, parentOf);
+        const rows = [];
+        set.forEach(from => {
+            (children.get(from) || []).forEach(c => {
+                if (set.has(c.to)) {
+                    rows.push({ from, to: c.to, level: c.level, condition: c.condition, method: c.method });
+                }
+            });
+        });
+        return rows;
+    }
+
+    return { label: "进化链", render, menu, exportData };
 })();

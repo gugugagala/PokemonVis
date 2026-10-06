@@ -153,5 +153,15 @@ PV.views.parallel = (function () {
             .text("每条线为一只宝可梦，横跨六项种族值；悬停高亮，点击查看雷达图。");
     }
 
-    return { label: "平行坐标", render, menu };
+    function exportData() {
+        const sel = PV.selection.type;
+        const rows = sel === "ALL" ? PV.state.pokemon : PV.state.pokemon.filter(p => p.types.includes(sel));
+        return rows.map(p => ({
+            id: p.id, name: p.name, type: p.types.join("/"),
+            total: p.total, hp: p.hp, attack: p.attack, defense: p.defense,
+            spAtk: p.spAtk, spDef: p.spDef, speed: p.speed
+        }));
+    }
+
+    return { label: "平行坐标", render, menu, exportData };
 })();
