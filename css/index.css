@@ -417,3 +417,54 @@ body {
     text-align: right;
 }
 
+/* ------------------------- 移动端 / 窄屏适配 ------------------------- */
+@media (max-width: 768px) {
+    .nav {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 6px;
+        box-sizing: border-box;
+    }
+
+    .nav-item {
+        width: auto;
+        flex: 1 1 30%;
+        height: 40px;
+        margin: 4px;
+        font-size: 13px;
+    }
+
+    .menu {
+        float: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        width: 100%;
+        height: auto;
+        max-height: 32vh;
+        border-right: none;
+        border-bottom: 1px solid #e0e6e4;
+    }
+
+    .menu-field {
+        flex: 1 1 45%;
+    }
+
+    .menu-field select,
+    .menu-field input[type="text"] {
+        font-size: 16px;
+    }
+
+    .vis-chart {
+        margin-left: 0;
+        height: 64vh;
+    }
+
+    .radar-panel {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+    }
+}
+
