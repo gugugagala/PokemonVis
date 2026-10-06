@@ -250,6 +250,11 @@ body {
     fill: #7a8a87;
 }
 
+.empty-state {
+    font-size: 14px;
+    fill: #9aa5a2;
+}
+
 /* 技能探索器 */
 .move-name {
     font-size: 11px;

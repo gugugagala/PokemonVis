@@ -46,6 +46,16 @@ PV.views.parallel = (function () {
         const g = svg.append("g")
             .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
 
+        if (!data.length) {
+            svg.append("text")
+                .attr("class", "empty-state")
+                .attr("x", PV.state.width / 2)
+                .attr("y", PV.state.height / 2)
+                .attr("text-anchor", "middle")
+                .text("当前筛选下没有宝可梦");
+            return;
+        }
+
         /* 坐标轴 */
         AXES.forEach(([label, key], i) => {
             g.append("line")

@@ -59,7 +59,15 @@ PV.views.moves = (function () {
             .attr("x", 24).attr("y", 48)
             .text(`匹配 ${all.length} 个技能${scope}${all.length > MAX_BARS ? `，显示前 ${MAX_BARS} 个` : ""}`);
 
-        if (!shown.length) return;
+        if (!shown.length) {
+            svg.append("text")
+                .attr("class", "empty-state")
+                .attr("x", PV.state.width / 2)
+                .attr("y", PV.state.height / 2)
+                .attr("text-anchor", "middle")
+                .text("没有匹配的技能，请调整筛选条件");
+            return;
+        }
 
         const g = svg.append("g")
             .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
