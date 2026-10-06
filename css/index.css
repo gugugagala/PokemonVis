@@ -194,6 +194,24 @@ body {
     fill: #444444;
 }
 
+/* 进化链 */
+.evo-node-label {
+    font-size: 11px;
+    fill: #2c3e50;
+    pointer-events: none;
+}
+
+.evo-edge-label {
+    font-size: 10px;
+    fill: #7a8a87;
+}
+
+.menu-hint {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #8a9a97;
+}
+
 /* Tooltip */
 .tooltip {
     position: absolute;
