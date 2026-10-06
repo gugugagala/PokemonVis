@@ -68,6 +68,47 @@ body {
     align-items: center;
 }
 
+.scatter-svg {
+    display: block;
+}
+
+/* 坐标轴 */
+.axis path,
+.axis line {
+    stroke: #b0b0b0;
+}
+
+.axis text {
+    font-size: 11px;
+    fill: #333333;
+}
+
+.axis-title {
+    font-size: 12px;
+    fill: #555555;
+}
+
+.dot {
+    transition: opacity 0.2s;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    padding: 8px 12px;
+    background: #ffffff;
+    color: #154360;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+    z-index: 10;
+}
+
 /* 按钮 */
 .btn {
     width: 170px;

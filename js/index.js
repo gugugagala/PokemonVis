@@ -1,170 +1,216 @@
-let dataset = '';
+/* PokemonVis —— 宝可梦属性散点图可视化主逻辑 */
 
-const dimensions = {
-    margin: {
-        top: 30,
-        right: 30,
-        bottom: 30,
-        left: 30
-    }
+const CONFIG = {
+    margin: { top: 50, right: 40, bottom: 80, left: 70 },
+    pointRadius: 5,
+    pointColor: "#568100",
+    transition: 300
 };
 
-let chartWidth, chartHeight
+const state = {
+    width: 0,
+    height: 0,
+    innerW: 0,
+    innerH: 0,
+    svg: null,
+    tooltip: null,
+    pokemon: [],
+    moves: [],
+    evolution: [],
+    typechart: []
+};
 
-window.onload = getVisSize()
-$(window).resize(function () {
-    chartWidth = $('.vis-chart').width()
-    chartHeight = $('.vis-chart').height()
+/* ------------------------- 数据加载与清洗 ------------------------- */
 
-    getDimensions()
-
-})
-
-function getVisSize() {
-    chartWidth = $('.vis-chart').width()
-    chartHeight = $('.vis-chart').height()
-    getDimensions()
-}
-
-function getDimensions() {
-    dimensions.width = (chartWidth - dimensions.margin.left - dimensions.margin.right) * 0.95
-    dimensions.boundedWidth = (chartWidth - dimensions.margin.left - dimensions.margin.right)
-    dimensions.height = (chartHeight - dimensions.margin.top - dimensions.margin.bottom) * 0.95
-    dimensions.boundedHeight = (chartHeight - dimensions.margin.top - dimensions.margin.bottom)
-}
-
-let visChart = d3.select('.vis-chart').append("svg")
-    .attr('width', chartWidth - dimensions.margin.left)
-    .attr('height', chartHeight - dimensions.margin.right)
-    .style('background-color', '#e0ffa3')
-
-Promise.all([
-        d3.csv("./data/pokemon.csv", d => d),
-        d3.csv("./data/moves.csv", d => d),
-        d3.csv("./data/evolution.csv", d => d),
-        d3.csv("./data/typechart.csv", d => d)
-    ])
-    .then(data => dataset = data)
-    .then(() => makeVisualization())
-
-let limits;
-let zuobiao_y, zuobiao_x;
-let xScale, yScale;
-let xAxis, yAxis;
-
-function makeVisualization() {
-    zuobiao_x = dataset[0].map((row) => parseInt(row["HP"]))
-    zuobiao_y = dataset[0].map((row) => parseInt(row["Speed"]))
-
-    limits = findMinMax(zuobiao_x, zuobiao_y)
-
-    xScale = d3.scaleLinear()
-        .domain([limits.dataOneMin, limits.dataOneMax])
-        .range([0 + dimensions.margin.left, dimensions.width])
-        .nice();
-    yScale = d3.scaleLinear()
-        .domain([limits.dataTwoMin, limits.dataTwoMax])
-        .range([dimensions.height * 0.7, 0 + dimensions.margin.bottom])
-        .nice();
-    drawAxis(xScale, yScale);
-    addAxisText('Speed', 'HP');
-    drawPlot(xScale, yScale);
-
-}
-
-function findMinMax(data_one, data_two) {
+function parsePokemonRow(d) {
     return {
-        dataOneMin: d3.min(data_one),
-        dataOneMax: d3.max(data_one),
-        dataTwoMin: d3.min(data_two),
-        dataTwoMax: d3.max(data_two)
-    }
+        id: (d["#"] || "").trim(),
+        name: d["Name"],
+        type: d["Type"],
+        total: +d["Total"],
+        hp: +d["HP"],
+        attack: +d["Attack"],
+        defense: +d["Defense"],
+        spAtk: +d["Special Attack"],
+        spDef: +d["Special Defense"],
+        speed: +d["Speed"]
+    };
 }
 
-
-
-/******** 添加坐标轴 ***** */
-function drawAxis(xScale, yScale) {
-
-    xAxis = d3.axisBottom().scale(xScale);
-    yAxis = d3.axisLeft().scale(yScale);
-
-    visChart.append('g')
-        .call(xAxis)
-        .attr('transform', 'translate(' + (dimensions.margin.left) + ',' + (dimensions.height * 0.7) + ')')
-
-    visChart.append('g')
-        .call(yAxis)
-        .attr("transform", 'translate(' + (dimensions.margin.left * 2) + ',' + (0) + ')')
+/* 双属性宝可梦在原始数据中拆为多行，按 (# + Name) 去重并把属性合并为数组 */
+function consolidatePokemon(rows) {
+    const byKey = new Map();
+    rows.forEach(row => {
+        const key = row.id + "|" + row.name;
+        const existing = byKey.get(key);
+        if (existing) {
+            if (!existing.types.includes(row.type)) existing.types.push(row.type);
+        } else {
+            byKey.set(key, Object.assign({}, row, { types: [row.type] }));
+        }
+    });
+    return Array.from(byKey.values());
 }
 
+function loadData() {
+    return Promise.all([
+        d3.csv("./data/pokemon.csv", parsePokemonRow),
+        d3.csv("./data/moves.csv"),
+        d3.csv("./data/evolution.csv"),
+        d3.csv("./data/typechart.csv")
+    ]).then(([pokemon, moves, evolution, typechart]) => {
+        state.pokemon = consolidatePokemon(pokemon);
+        state.moves = moves;
+        state.evolution = evolution;
+        state.typechart = typechart;
+    });
+}
 
-/* ****** 添加坐标轴名称 **** */
-function addAxisText(xAxisText, yAxisText) {
-    visChart.append("text")
+/* ------------------------------ 布局 ------------------------------ */
+
+function measure() {
+    const el = document.querySelector(".vis-chart");
+    state.width = el.clientWidth;
+    state.height = el.clientHeight;
+    state.innerW = Math.max(0, state.width - CONFIG.margin.left - CONFIG.margin.right);
+    state.innerH = Math.max(0, state.height - CONFIG.margin.top - CONFIG.margin.bottom);
+}
+
+/* ------------------------------ 绘制 ------------------------------ */
+
+const xAccessor = d => d.hp;
+const yAccessor = d => d.speed;
+
+function draw() {
+    const svg = state.svg;
+    svg.selectAll("*").remove();
+    svg.attr("width", state.width).attr("height", state.height);
+
+    const data = state.pokemon;
+    if (!data.length) return;
+
+    const xScale = d3.scaleLinear()
+        .domain(d3.extent(data, xAccessor))
+        .range([0, state.innerW])
+        .nice();
+    const yScale = d3.scaleLinear()
+        .domain(d3.extent(data, yAccessor))
+        .range([state.innerH, 0])
+        .nice();
+
+    const plot = svg.append("g")
+        .attr("class", "plot")
+        .attr("transform", `translate(${CONFIG.margin.left},${CONFIG.margin.top})`);
+
+    drawAxes(plot, xScale, yScale);
+    drawDots(plot, xScale, yScale, data);
+}
+
+function drawAxes(plot, xScale, yScale) {
+    plot.append("g")
+        .attr("class", "axis axis-x")
+        .attr("transform", `translate(0,${state.innerH})`)
+        .call(d3.axisBottom(xScale));
+
+    plot.append("g")
+        .attr("class", "axis axis-y")
+        .call(d3.axisLeft(yScale));
+
+    plot.append("text")
+        .attr("class", "axis-title")
         .attr("text-anchor", "middle")
-        .attr("transform", "translate(" + (dimensions.margin.left - 10) + "," + (dimensions.height * 0.7 / 2) + ")rotate(-90)")
-        .style("font-size", "10pt")
-        .text(xAxisText);
+        .attr("x", -state.innerH / 2)
+        .attr("y", -CONFIG.margin.left + 16)
+        .attr("transform", "rotate(-90)")
+        .text("Speed");
 
-    visChart.append("text")
+    plot.append("text")
+        .attr("class", "axis-title")
         .attr("text-anchor", "middle")
-        .attr("transform", "translate(" + (dimensions.width / 2) + "," + (dimensions.height * 0.7 + dimensions.margin.bottom + 10) + ")")
-        .style("font-size", "10pt")
-        .text(yAxisText);
+        .attr("x", state.innerW / 2)
+        .attr("y", state.innerH + CONFIG.margin.bottom - 30)
+        .text("HP");
 }
 
-const xAccessor = d => d["HP"]
-const yAccessor = d => d["Speed"]
-let dots;
-
-/********* 绘制散点图 ************/
-function drawPlot(xScale, yScale) {
-    dots = visChart.selectAll('circle')
-        .data(dataset[0])
-        .enter().append('circle')
+function drawDots(plot, xScale, yScale, data) {
+    plot.selectAll(".dot")
+        .data(data, d => d.id + "|" + d.name)
+        .enter()
+        .append("circle")
+        .attr("class", "dot")
         .attr("cx", d => xScale(xAccessor(d)))
-        .attr('cy', d => yScale(yAccessor(d)))
-        .attr('r', 5)
-        .attr('fill', "#568100")
+        .attr("cy", d => yScale(yAccessor(d)))
+        .attr("r", CONFIG.pointRadius)
+        .attr("fill", CONFIG.pointColor)
         .style("cursor", "pointer")
-    plotTooltip();
-    dots.on("mouseover", d => {
-        tooltip.transition()
-            .duration(200)
-            .style("opacity", 0.9)
-        tooltip.html(
-            "#" + d["#"] + " " + d["Name"] + "<br/>" +
-            "Total: " + d["Total"] + "<br/>" +
-            "HP: " + d["HP"] + "<br/>" +
-            "Attack: " + d["Attack"] + "<br/>" +
-            "Defense: " + d["Defense"] + "<br/>" +
-            "Sp. Atk: " + d["Special Attack"] + "<br/>" +
-            "Sp. Def: " + d["Special Defense"] + "<br/>" +
-            "Speed: " + d["Speed"]
-        )
-            .style("left", (d3.event.pageX) + "px")
-            .style("top", (d3.event.pageY + 25) + "px")
-    }).on("mouseout", d => {
-        tooltip.transition()
-            .duration(500)
-            .style("opacity", 0)
-            .style("cursor", "default");
-    })
+        .on("mouseover", showTooltip)
+        .on("mousemove", moveTooltip)
+        .on("mouseout", hideTooltip);
 }
 
-let tooltip;
-/* 添加 tooltip 显示当前鼠标位置宝可梦的部分信息 */
-function plotTooltip() {
-    tooltip = d3.select(".vis-chart").append('div')
-        .attr("class", "tooltip")
-        .style("opacity", 0)
-        .style("background", "#e4edf8")
-        .style("color", "#154360")
-        .style('font-size', '10pt')
-        .style("text-align", "center")
-        .style("padding", "10px")
-        .style('box-shadow', "0 0 5px #999999")
-        .style("position", "absolute")
+/* ---------------------------- Tooltip ---------------------------- */
 
+function tooltipHtml(d) {
+    return (
+        "#" + d.id + " " + d.name + "<br/>" +
+        "Total: " + d.total + "<br/>" +
+        "HP: " + d.hp + "<br/>" +
+        "Attack: " + d.attack + "<br/>" +
+        "Defense: " + d.defense + "<br/>" +
+        "Sp. Atk: " + d.spAtk + "<br/>" +
+        "Sp. Def: " + d.spDef + "<br/>" +
+        "Speed: " + d.speed
+    );
 }
+
+function showTooltip(d) {
+    state.tooltip.html(tooltipHtml(d))
+        .transition().duration(150)
+        .style("opacity", 0.95);
+    moveTooltip(d);
+}
+
+function moveTooltip(d) {
+    const node = state.tooltip.node();
+    const tw = node.offsetWidth;
+    const th = node.offsetHeight;
+    const pageW = document.documentElement.clientWidth + window.scrollX;
+    const pageH = document.documentElement.clientHeight + window.scrollY;
+
+    let x = d3.event.pageX + 16;
+    let y = d3.event.pageY + 16;
+    if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
+    if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
+
+    state.tooltip.style("left", x + "px").style("top", y + "px");
+}
+
+function hideTooltip() {
+    state.tooltip.transition().duration(200).style("opacity", 0);
+}
+
+/* ------------------------------ 启动 ------------------------------ */
+
+let resizeTimer;
+
+function onResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        measure();
+        draw();
+    }, 150);
+}
+
+function init() {
+    const container = d3.select(".vis-chart");
+    state.svg = container.append("svg").attr("class", "scatter-svg");
+    state.tooltip = container.append("div").attr("class", "tooltip");
+
+    measure();
+    draw();
+    window.addEventListener("resize", onResize);
+
+    loadData().then(draw).catch(err => console.error("数据加载失败:", err));
+}
+
+init();
