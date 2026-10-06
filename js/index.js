@@ -133,11 +133,16 @@ function drawPlot(xScale, yScale) {
         tooltip.transition()
             .duration(200)
             .style("opacity", 0.9)
-        tooltip.html(d["#"] + "<br/>" + d["Name"] + "<br/>")
-            .html(d["Total"] + "<br/>" + d["HP"] + "<br/>")
-            .html(d["Attack"] + "<br/>" + d["Defense"] + "<br/>")
-            .html(d["Special Attack"] + "<br/>" + d["Special Defense"] + "<br/>")
-            .html(d["Speed"] + "<br/>")
+        tooltip.html(
+            "#" + d["#"] + " " + d["Name"] + "<br/>" +
+            "Total: " + d["Total"] + "<br/>" +
+            "HP: " + d["HP"] + "<br/>" +
+            "Attack: " + d["Attack"] + "<br/>" +
+            "Defense: " + d["Defense"] + "<br/>" +
+            "Sp. Atk: " + d["Special Attack"] + "<br/>" +
+            "Sp. Def: " + d["Special Defense"] + "<br/>" +
+            "Speed: " + d["Speed"]
+        )
             .style("left", (d3.event.pageX) + "px")
             .style("top", (d3.event.pageY + 25) + "px")
     }).on("mouseout", d => {
