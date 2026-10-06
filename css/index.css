@@ -35,10 +35,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #e47979;
+    background-color: #c0505e;
     color: #ffffff;
+    font-family: inherit;
     font-size: 16px;
     font-weight: 600;
+    border: none;
     border-radius: 6px;
     cursor: pointer;
     user-select: none;
@@ -46,7 +48,7 @@ body {
 }
 
 .nav-item:hover {
-    background-color: #d4616e;
+    background-color: #a8414e;
 }
 
 .nav-item.active {
@@ -55,6 +57,14 @@ body {
 
 .nav-item:active {
     transform: scale(0.97);
+}
+
+.nav-item:focus-visible,
+.menu-field select:focus-visible,
+.menu-field input:focus-visible,
+.radar-close:focus-visible {
+    outline: 2px solid #073b4c;
+    outline-offset: 2px;
 }
 
 .menu {

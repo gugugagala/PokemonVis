@@ -33,6 +33,8 @@ PV.views.typechart = (function () {
 
         const svg = d3.select(container).append("svg")
             .attr("class", "heatmap-svg")
+            .attr("role", "img")
+            .attr("aria-label", "属性克制矩阵热力图：行为攻击方，列为防御方")
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 

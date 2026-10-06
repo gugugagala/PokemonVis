@@ -31,6 +31,8 @@ PV.views.parallel = (function () {
 
         const svg = d3.select(container).append("svg")
             .attr("class", "parallel-svg")
+            .attr("role", "img")
+            .attr("aria-label", "六维种族值平行坐标图")
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 

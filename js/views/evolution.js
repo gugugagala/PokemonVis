@@ -101,6 +101,8 @@ PV.views.evolution = (function () {
 
         const svg = d3.select(container).append("svg")
             .attr("class", "evolution-svg")
+            .attr("role", "img")
+            .attr("aria-label", `进化链：${root} 家族`)
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 

@@ -28,6 +28,8 @@ PV.views.scatter = (function () {
 
         svg = d3.select(container).append("svg")
             .attr("class", "scatter-svg")
+            .attr("role", "img")
+            .attr("aria-label", "散点图：宝可梦 HP 与 Speed 种族值分布")
             .attr("width", box.width)
             .attr("height", box.height);
 

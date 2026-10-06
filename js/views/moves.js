@@ -32,6 +32,8 @@ PV.views.moves = (function () {
         PV.measure(MARGIN);
         const svg = d3.select(container).append("svg")
             .attr("class", "moves-svg")
+            .attr("role", "img")
+            .attr("aria-label", "技能威力横向条形图")
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 

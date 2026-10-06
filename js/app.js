@@ -29,10 +29,15 @@ PV.switchView = function (name) {
     PV.renderActive();
     PV.renderMenu();
 
-    d3.selectAll(".nav-item")
-        .classed("active", function () {
-            return d3.select(this).attr("data-view") === name;
-        });
+    document.querySelectorAll(".nav-item").forEach(item => {
+        const isActive = item.getAttribute("data-view") === name;
+        item.classList.toggle("active", isActive);
+        if (isActive) {
+            item.setAttribute("aria-current", "true");
+        } else {
+            item.removeAttribute("aria-current");
+        }
+    });
 };
 
 let resizeTimer;

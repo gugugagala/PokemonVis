@@ -23,8 +23,14 @@ PV.radar = (function () {
 
     function ensurePanel() {
         if (panel) return;
-        panel = d3.select("body").append("div").attr("class", "radar-panel").style("display", "none");
-        panel.append("button").attr("class", "radar-close").text("✕")
+        panel = d3.select("body").append("div").attr("class", "radar-panel")
+            .attr("role", "dialog")
+            .attr("aria-label", "宝可梦种族值雷达图")
+            .style("display", "none");
+        panel.append("button").attr("class", "radar-close")
+            .attr("type", "button")
+            .attr("aria-label", "关闭雷达图")
+            .text("✕")
             .on("click", hide);
         panel.append("div").attr("class", "radar-body");
     }
@@ -94,6 +100,8 @@ PV.radar = (function () {
                 .attr("dominant-baseline", "central")
                 .text(pokemon[STATS[i][1]]);
         });
+
+        panel.select(".radar-close").node().focus();
     }
 
     function hide() {

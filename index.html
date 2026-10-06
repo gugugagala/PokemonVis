@@ -10,15 +10,15 @@
 </head>
 
 <body>
-    <div class="nav">
-        <div class="nav-item active" data-view="scatter">散点图</div>
-        <div class="nav-item" data-view="typechart">属性克制</div>
-        <div class="nav-item" data-view="evolution">进化链</div>
-        <div class="nav-item" data-view="moves">技能</div>
-        <div class="nav-item" data-view="parallel">平行坐标</div>
-    </div>
-    <div class="menu"></div>
-    <div class="vis-chart"></div>
+    <nav class="nav" aria-label="视图切换">
+        <button type="button" class="nav-item active" data-view="scatter" aria-current="true">散点图</button>
+        <button type="button" class="nav-item" data-view="typechart">属性克制</button>
+        <button type="button" class="nav-item" data-view="evolution">进化链</button>
+        <button type="button" class="nav-item" data-view="moves">技能</button>
+        <button type="button" class="nav-item" data-view="parallel">平行坐标</button>
+    </nav>
+    <div class="menu" aria-label="筛选控件"></div>
+    <div class="vis-chart" role="region" aria-label="可视化视图"></div>
 
     <script type="text/javascript" src="./js/d3.js"></script>
     <script type="text/javascript" src="./js/data.js"></script>
