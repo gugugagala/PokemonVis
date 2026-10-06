@@ -1,0 +1,182 @@
+/* 视图：技能探索器（可筛选、排序的横向条形图） */
+window.PV = window.PV || {};
+PV.views = PV.views || {};
+
+PV.views.moves = (function () {
+    const MARGIN = { top: 64, right: 48, bottom: 24, left: 150 };
+    const MAX_BARS = 45;
+
+    const filters = { search: "", type: "ALL", category: "ALL", sort: "power" };
+    const SORTERS = {
+        power: (a, b) => b.power - a.power || a.name.localeCompare(b.name),
+        pp: (a, b) => b.pp - a.pp || a.name.localeCompare(b.name),
+        name: (a, b) => a.name.localeCompare(b.name)
+    };
+
+    let tooltip;
+
+    function filtered() {
+        const q = filters.search.trim().toLowerCase();
+        return PV.state.moves
+            .filter(m =>
+                (filters.type === "ALL" || m.type === filters.type) &&
+                (filters.category === "ALL" || m.category === filters.category) &&
+                (!q || m.name.toLowerCase().includes(q)))
+            .sort(SORTERS[filters.sort]);
+    }
+
+    function render(container) {
+        const all = filtered();
+        const shown = all.slice(0, MAX_BARS);
+
+        PV.measure(MARGIN);
+        const svg = d3.select(container).append("svg")
+            .attr("class", "moves-svg")
+            .attr("width", PV.state.width)
+            .attr("height", PV.state.height);
+
+        tooltip = d3.select(container).append("div").attr("class", "tooltip");
+
+        svg.append("text")
+            .attr("class", "chart-title")
+            .attr("x", 24).attr("y", 30)
+            .text("技能探索器");
+
+        svg.append("text")
+            .attr("class", "chart-subtitle")
+            .attr("x", 24).attr("y", 48)
+            .text(`匹配 ${all.length} 个技能${all.length > MAX_BARS ? `，显示前 ${MAX_BARS} 个` : ""}`);
+
+        if (!shown.length) return;
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+        const maxPower = d3.max(shown, d => d.power) || 1;
+        const xScale = d3.scaleLinear().domain([0, maxPower]).range([0, PV.state.innerW - 40]);
+
+        const rowH = PV.state.innerH / shown.length;
+        const barH = Math.max(6, rowH * 0.72);
+
+        const rows = g.selectAll(".move-row")
+            .data(shown)
+            .enter()
+            .append("g")
+            .attr("class", "move-row")
+            .attr("transform", (d, i) => `translate(0,${i * rowH})`)
+            .style("cursor", "pointer")
+            .on("mouseover", function (d) {
+                d3.select(this).select(".move-bar").attr("opacity", 1);
+                showTooltip(d);
+            })
+            .on("mousemove", moveTooltip)
+            .on("mouseout", function () {
+                d3.select(this).select(".move-bar").attr("opacity", 0.85);
+                hideTooltip();
+            });
+
+        rows.append("rect")
+            .attr("class", "move-bar")
+            .attr("x", 0)
+            .attr("y", (rowH - barH) / 2)
+            .attr("height", barH)
+            .attr("width", 0)
+            .attr("rx", 2)
+            .attr("fill", d => PV.TYPE_COLORS[d.type] || PV.FALLBACK_COLOR)
+            .attr("opacity", 0.85)
+            .transition().duration(PV.TRANSITION)
+            .attr("width", d => xScale(d.power));
+
+        rows.append("text")
+            .attr("class", "move-name")
+            .attr("x", -8)
+            .attr("y", rowH / 2)
+            .attr("text-anchor", "end")
+            .attr("dominant-baseline", "central")
+            .text(d => d.name);
+
+        rows.append("text")
+            .attr("class", "move-value")
+            .attr("x", d => xScale(d.power) + 6)
+            .attr("y", rowH / 2)
+            .attr("dominant-baseline", "central")
+            .text(d => d.power ? d.power : "—");
+    }
+
+    function showTooltip(m) {
+        const badge = `<span class="type-badge" style="background:${PV.TYPE_COLORS[m.type] || PV.FALLBACK_COLOR}">${PV.typeLabel(m.type)}</span>`;
+        tooltip.html(
+            `<div class="tooltip-name">${m.name}</div>` +
+            `<div class="tooltip-types">${badge}<span class="move-cat">${m.category}</span></div>` +
+            `<div class="tooltip-stats">` +
+            `<div class="stat-row"><span>威力</span><b>${m.power || "—"}</b></div>` +
+            `<div class="stat-row"><span>命中</span><b>${m.accuracy || "—"}</b></div>` +
+            `<div class="stat-row"><span>PP</span><b>${m.pp}</b></div>` +
+            `</div>` +
+            (m.effect ? `<div class="tooltip-effect">${m.effect}</div>` : "")
+        ).transition().duration(120).style("opacity", 0.95);
+        moveTooltip();
+    }
+
+    function moveTooltip() {
+        const node = tooltip.node();
+        const tw = node.offsetWidth, th = node.offsetHeight;
+        const pageW = document.documentElement.clientWidth + window.scrollX;
+        const pageH = document.documentElement.clientHeight + window.scrollY;
+        let x = d3.event.pageX + 16;
+        let y = d3.event.pageY + 16;
+        if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
+        if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
+        tooltip.style("left", x + "px").style("top", y + "px");
+    }
+
+    function hideTooltip() {
+        tooltip.transition().duration(200).style("opacity", 0);
+    }
+
+    function menu(menuEl) {
+        const root = d3.select(menuEl);
+        root.append("div").attr("class", "menu-title").text("技能探索器");
+
+        const search = root.append("div").attr("class", "menu-field");
+        search.append("label").text("搜索技能名");
+        search.append("input").attr("type", "text").attr("placeholder", "如: punch")
+            .property("value", filters.search)
+            .on("input", function () {
+                filters.search = this.value;
+                PV.renderActive();
+            });
+
+        const typeField = root.append("div").attr("class", "menu-field");
+        typeField.append("label").text("属性");
+        const typeSel = typeField.append("select").on("change", function () {
+            filters.type = this.value;
+            PV.renderActive();
+        });
+        typeSel.append("option").attr("value", "ALL").text("全部");
+        PV.TYPE_ORDER.forEach(t => typeSel.append("option").attr("value", t).text(PV.typeLabel(t)));
+        typeSel.property("value", filters.type);
+
+        const catField = root.append("div").attr("class", "menu-field");
+        catField.append("label").text("类别");
+        const catSel = catField.append("select").on("change", function () {
+            filters.category = this.value;
+            PV.renderActive();
+        });
+        ["ALL", "Physical", "Special", "Status"].forEach(c =>
+            catSel.append("option").attr("value", c).text(c === "ALL" ? "全部" : c));
+        catSel.property("value", filters.category);
+
+        const sortField = root.append("div").attr("class", "menu-field");
+        sortField.append("label").text("排序");
+        const sortSel = sortField.append("select").on("change", function () {
+            filters.sort = this.value;
+            PV.renderActive();
+        });
+        [["power", "威力"], ["pp", "PP"], ["name", "名称"]].forEach(([v, label]) =>
+            sortSel.append("option").attr("value", v).text(label));
+        sortSel.property("value", filters.sort);
+    }
+
+    return { label: "技能", render, menu };
+})();

@@ -164,6 +164,38 @@ body {
     fill: #2c3e50;
 }
 
+.chart-subtitle {
+    font-size: 12px;
+    fill: #7a8a87;
+}
+
+/* 技能探索器 */
+.move-name {
+    font-size: 11px;
+    fill: #333333;
+}
+
+.move-value {
+    font-size: 10px;
+    fill: #7a8a87;
+}
+
+.move-cat {
+    font-size: 10px;
+    color: #666666;
+    margin-left: 4px;
+}
+
+.tooltip-effect {
+    max-width: 220px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e0e0e0;
+    color: #555555;
+    white-space: normal;
+    line-height: 1.4;
+}
+
 /* 坐标轴 */
 .axis path,
 .axis line {
