@@ -147,6 +147,64 @@ PV.exportCSV = function () {
     PV.toast("CSV 已导出");
 };
 
+const INLINE_PROPS = [
+    "fill", "fill-opacity", "stroke", "stroke-width", "stroke-opacity",
+    "stroke-dasharray", "opacity", "font-family", "font-size", "font-weight",
+    "text-anchor", "dominant-baseline", "letter-spacing", "shape-rendering", "display"
+];
+
+/* 将 CSS 计算样式内联进克隆的 SVG，避免导出后丢失样式 */
+function inlineStyles(srcRoot, dstRoot) {
+    const src = [srcRoot, ...srcRoot.querySelectorAll("*")];
+    const dst = [dstRoot, ...dstRoot.querySelectorAll("*")];
+    for (let i = 0; i < src.length; i++) {
+        if (!dst[i]) continue;
+        const cs = getComputedStyle(src[i]);
+        let style = dst[i].getAttribute("style") || "";
+        INLINE_PROPS.forEach(prop => {
+            const value = cs.getPropertyValue(prop);
+            if (value) style += prop + ":" + value + ";";
+        });
+        dst[i].setAttribute("style", style);
+    }
+}
+
+PV.exportPNG = function () {
+    const svg = document.querySelector(".vis-chart svg");
+    if (!svg) {
+        PV.toast("无可导出内容");
+        return;
+    }
+    const width = svg.width.baseVal.value || svg.clientWidth;
+    const height = svg.height.baseVal.value || svg.clientHeight;
+
+    const clone = svg.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("width", width);
+    clone.setAttribute("height", height);
+    inlineStyles(svg, clone);
+
+    const serialized = new XMLSerializer().serializeToString(clone);
+    const img = new Image();
+    img.onload = () => {
+        const scale = 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+            download("pokemonvis-" + PV.currentName + ".png", "image/png", blob);
+            PV.toast("PNG 已导出");
+        });
+    };
+    img.onerror = () => PV.toast("PNG 导出失败");
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(serialized);
+};
+
 PV.renderTools = function (menu) {
     const tools = document.createElement("div");
     tools.className = "menu-tools";
@@ -164,6 +222,13 @@ PV.renderTools = function (menu) {
     csv.textContent = "导出 CSV";
     csv.addEventListener("click", PV.exportCSV);
     tools.appendChild(csv);
+
+    const png = document.createElement("button");
+    png.type = "button";
+    png.className = "tool-btn";
+    png.textContent = "导出 PNG";
+    png.addEventListener("click", PV.exportPNG);
+    tools.appendChild(png);
 
     menu.appendChild(tools);
 };
