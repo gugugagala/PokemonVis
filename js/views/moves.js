@@ -13,14 +13,23 @@ PV.views.moves = (function () {
         name: (a, b) => a.name.localeCompare(b.name)
     };
 
+    let linkSelected = false;
     let tooltip;
+
+    function selectedTypes() {
+        if (!linkSelected || !PV.selection.name) return null;
+        const p = PV.pokemonByName(PV.selection.name);
+        return p ? p.types : null;
+    }
 
     function filtered() {
         const q = filters.search.trim().toLowerCase();
+        const selTypes = selectedTypes();
         return PV.state.moves
             .filter(m =>
                 (filters.type === "ALL" || m.type === filters.type) &&
                 (filters.category === "ALL" || m.category === filters.category) &&
+                (!selTypes || selTypes.includes(m.type)) &&
                 (!q || m.name.toLowerCase().includes(q)))
             .sort(SORTERS[filters.sort]);
     }
@@ -44,10 +53,11 @@ PV.views.moves = (function () {
             .attr("x", 24).attr("y", 30)
             .text("技能探索器");
 
+        const scope = selectedTypes() ? `（${PV.selection.name} 的属性）` : "";
         svg.append("text")
             .attr("class", "chart-subtitle")
             .attr("x", 24).attr("y", 48)
-            .text(`匹配 ${all.length} 个技能${all.length > MAX_BARS ? `，显示前 ${MAX_BARS} 个` : ""}`);
+            .text(`匹配 ${all.length} 个技能${scope}${all.length > MAX_BARS ? `，显示前 ${MAX_BARS} 个` : ""}`);
 
         if (!shown.length) return;
 
@@ -178,6 +188,18 @@ PV.views.moves = (function () {
         [["power", "威力"], ["pp", "PP"], ["name", "名称"]].forEach(([v, label]) =>
             sortSel.append("option").attr("value", v).text(label));
         sortSel.property("value", filters.sort);
+
+        const link = root.append("label").attr("class", "menu-checkbox");
+        link.append("input").attr("type", "checkbox")
+            .property("checked", linkSelected)
+            .on("change", function () {
+                linkSelected = this.checked;
+                PV.renderActive();
+            });
+        link.append("span").text("仅显示所选宝可梦的属性技能");
+
+        root.append("div").attr("class", "menu-hint")
+            .text("在散点图选中宝可梦后勾选上方选项，可联动查看其属性技能。");
     }
 
     return { label: "技能", render, menu };
