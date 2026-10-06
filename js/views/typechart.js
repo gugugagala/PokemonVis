@@ -11,6 +11,7 @@ PV.views.typechart = (function () {
 
     let highlight = "ALL";
     let onlyEffective = false;
+    let linkSelected = true;
     let tooltip;
 
     function buildMatrix(rows) {
@@ -40,18 +41,31 @@ PV.views.typechart = (function () {
 
         tooltip = d3.select(container).append("div").attr("class", "tooltip");
 
+        let activeHighlight = highlight;
+        if (linkSelected && PV.selection.name) {
+            const p = PV.pokemonByName(PV.selection.name);
+            if (p) activeHighlight = p.types[0];
+        }
+
         svg.append("text")
             .attr("class", "chart-title")
             .attr("x", 24)
             .attr("y", 30)
             .text("属性克制矩阵（行：攻击方，列：防御方）");
 
+        if (activeHighlight !== "ALL") {
+            svg.append("text")
+                .attr("class", "chart-subtitle")
+                .attr("x", 24).attr("y", 48)
+                .text(`已高亮攻击属性：${PV.typeLabel(activeHighlight)}`);
+        }
+
         const g = svg.append("g")
             .attr("transform", `translate(${MARGIN.left + offsetX},${MARGIN.top + offsetY})`);
 
         const isDim = (a, d) => {
             const m = get(a, d);
-            if (highlight !== "ALL" && a !== highlight) return true;
+            if (activeHighlight !== "ALL" && a !== activeHighlight) return true;
             if (onlyEffective && m === 1) return true;
             return false;
         };
@@ -182,11 +196,24 @@ PV.views.typechart = (function () {
 
         const check = root.append("label").attr("class", "menu-checkbox");
         check.append("input").attr("type", "checkbox")
+            .property("checked", onlyEffective)
             .on("change", function () {
                 onlyEffective = this.checked;
                 PV.renderActive();
             });
         check.append("span").text("隐藏一般效果（1×）");
+
+        const link = root.append("label").attr("class", "menu-checkbox");
+        link.append("input").attr("type", "checkbox")
+            .property("checked", linkSelected)
+            .on("change", function () {
+                linkSelected = this.checked;
+                PV.renderActive();
+            });
+        link.append("span").text("跟随所选宝可梦主属性");
+
+        root.append("div").attr("class", "menu-hint")
+            .text("点击矩阵单元格查看倍率；在散点图选中宝可梦可自动高亮其攻击属性。");
     }
 
     return { label: "属性克制", render, menu };
