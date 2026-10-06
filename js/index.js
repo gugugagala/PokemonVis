@@ -2,8 +2,6 @@
 
 const CONFIG = {
     margin: { top: 50, right: 40, left: 70 },
-    pointRadius: 5,
-    pointColor: "#568100",
     transition: 300
 };
 
@@ -121,13 +119,16 @@ function draw() {
         .domain(d3.extent(data, yAccessor))
         .range([state.innerH, 0])
         .nice();
+    const rScale = d3.scaleSqrt()
+        .domain(d3.extent(data, d => d.total))
+        .range([3, 14]);
 
     const plot = svg.append("g")
         .attr("class", "plot")
         .attr("transform", `translate(${CONFIG.margin.left},${CONFIG.margin.top})`);
 
     drawAxes(plot, xScale, yScale);
-    drawDots(plot, xScale, yScale, data);
+    drawDots(plot, xScale, yScale, rScale, data);
     drawLegend(svg);
 }
 
@@ -187,7 +188,9 @@ function drawAxes(plot, xScale, yScale) {
         .text("HP");
 }
 
-function drawDots(plot, xScale, yScale, data) {
+function drawDots(plot, xScale, yScale, rScale, data) {
+    const radius = d => rScale(d.total);
+
     plot.selectAll(".dot")
         .data(data, d => d.id + "|" + d.name)
         .enter()
@@ -195,14 +198,20 @@ function drawDots(plot, xScale, yScale, data) {
         .attr("class", "dot")
         .attr("cx", d => xScale(xAccessor(d)))
         .attr("cy", d => yScale(yAccessor(d)))
-        .attr("r", CONFIG.pointRadius)
+        .attr("r", radius)
         .attr("fill", d => colorFor(d))
         .attr("stroke", "#ffffff")
         .attr("stroke-width", 0.5)
         .style("cursor", "pointer")
-        .on("mouseover", showTooltip)
+        .on("mouseover", function (d) {
+            d3.select(this).attr("r", radius(d) * 1.6);
+            showTooltip(d);
+        })
         .on("mousemove", moveTooltip)
-        .on("mouseout", hideTooltip);
+        .on("mouseout", function (d) {
+            d3.select(this).attr("r", radius(d));
+            hideTooltip();
+        });
 }
 
 /* ---------------------------- Tooltip ---------------------------- */
