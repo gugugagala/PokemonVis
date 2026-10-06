@@ -68,11 +68,72 @@ PV.renderChip = function () {
     chip.append(label, clear);
 };
 
+/* ------------------------------ 轻提示 ------------------------------ */
+
+let toastEl;
+
+PV.toast = function (message) {
+    if (!toastEl) {
+        toastEl = document.createElement("div");
+        toastEl.className = "toast";
+        toastEl.setAttribute("role", "status");
+        document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+    clearTimeout(toastEl._timer);
+    toastEl._timer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+};
+
+/* ---------------------------- 分享与导出 ---------------------------- */
+
+function legacyCopy(text, done) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand("copy");
+        done();
+    } catch (e) {
+        window.prompt("复制链接：", text);
+    }
+    ta.remove();
+}
+
+PV.copyShareLink = function () {
+    PV.syncHash();
+    const url = location.href;
+    const done = () => PV.toast("链接已复制");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => legacyCopy(url, done));
+    } else {
+        legacyCopy(url, done);
+    }
+};
+
+PV.renderTools = function (menu) {
+    const tools = document.createElement("div");
+    tools.className = "menu-tools";
+
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "tool-btn";
+    copy.textContent = "复制分享链接";
+    copy.addEventListener("click", PV.copyShareLink);
+    tools.appendChild(copy);
+
+    menu.appendChild(tools);
+};
+
 PV.renderMenu = function () {
     const menu = document.querySelector(".menu");
     d3.select(menu).html("");
     if (PV.current && PV.current.menu) PV.current.menu(menu, PV.state);
     PV.renderChip();
+    PV.renderTools(menu);
 };
 
 PV.switchView = function (name) {
