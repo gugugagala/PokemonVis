@@ -28,6 +28,18 @@ PV.state = {
     innerH: 0
 };
 
+/* 跨视图共享的选择状态：选中宝可梦名与属性筛选 */
+PV.selection = { name: null, type: "ALL" };
+
+PV.setSelection = function (patch) {
+    Object.assign(PV.selection, patch);
+    if (typeof PV.renderActive === "function") PV.renderActive();
+};
+
+PV.pokemonByName = function (name) {
+    return PV.state.pokemon.find(p => p.name === name);
+};
+
 /* ------------------------------ 工具函数 ------------------------------ */
 
 PV.typeLabel = function (type) {

@@ -9,11 +9,11 @@ PV.views.parallel = (function () {
         ["Sp. Atk", "spAtk"], ["Sp. Def", "spDef"], ["Speed", "speed"]
     ];
 
-    let typeFilter = "ALL";
     let tooltip;
 
     function render(container) {
         const all = PV.state.pokemon;
+        const typeFilter = PV.selection.type;
         const data = typeFilter === "ALL" ? all : all.filter(p => p.types.includes(typeFilter));
 
         PV.measure(MARGIN);
@@ -83,6 +83,7 @@ PV.views.parallel = (function () {
             .attr("stroke", d => PV.colorFor(d))
             .attr("stroke-width", 1.2)
             .style("cursor", "pointer")
+            .classed("selected", d => PV.selection.name === d.name)
             .on("mouseover", function (d) {
                 d3.select(this)
                     .raise()
@@ -91,11 +92,18 @@ PV.views.parallel = (function () {
                 showTooltip(d);
             })
             .on("mousemove", moveTooltip)
-            .on("mouseout", function () {
-                d3.select(this).attr("stroke-width", 1.2).attr("opacity", 0.12);
+            .on("mouseout", function (d) {
+                d3.select(this)
+                    .attr("stroke-width", PV.selection.name === d.name ? 3 : 1.2)
+                    .attr("opacity", PV.selection.name === d.name ? 1 : 0.12);
                 hideTooltip();
             })
-            .on("click", d => PV.radar.show(d));
+            .on("click", d => {
+                PV.setSelection({ name: d.name });
+                PV.radar.show(d);
+            });
+
+        g.selectAll(".pc-line.selected").raise();
     }
 
     function showTooltip(p) {
@@ -131,14 +139,13 @@ PV.views.parallel = (function () {
         root.append("div").attr("class", "menu-title").text("平行坐标");
 
         const field = root.append("div").attr("class", "menu-field");
-        field.append("label").text("按属性筛选");
+        field.append("label").text("按属性筛选（与散点图联动）");
         const select = field.append("select").on("change", function () {
-            typeFilter = this.value;
-            PV.renderActive();
+            PV.setSelection({ type: this.value });
         });
         select.append("option").attr("value", "ALL").text("全部");
         PV.TYPE_ORDER.forEach(t => select.append("option").attr("value", t).text(PV.typeLabel(t)));
-        select.property("value", typeFilter);
+        select.property("value", PV.selection.type);
 
         root.append("div").attr("class", "menu-hint")
             .text("每条线为一只宝可梦，横跨六项种族值；悬停高亮，点击查看雷达图。");

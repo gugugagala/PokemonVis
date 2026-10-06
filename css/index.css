@@ -199,6 +199,11 @@ body {
     transition: opacity 0.15s;
 }
 
+.pc-line.selected {
+    opacity: 1;
+    stroke-width: 3;
+}
+
 .parallel-tick {
     font-size: 10px;
     fill: #9aa5a2;
@@ -287,6 +292,30 @@ body {
     opacity: 1;
 }
 
+.dot.dim {
+    opacity: 0.06;
+}
+
+.dot.selected {
+    opacity: 1;
+    stroke: #2c3e50;
+    stroke-width: 1.5;
+}
+
+.legend g {
+    cursor: pointer;
+}
+
+.legend g.active circle {
+    stroke: #2c3e50;
+    stroke-width: 2;
+}
+
+.legend g.active .legend-text {
+    fill: #2c3e50;
+    font-weight: 600;
+}
+
 .legend-text {
     font-size: 11px;
     fill: #444444;
@@ -297,6 +326,11 @@ body {
     font-size: 11px;
     fill: #2c3e50;
     pointer-events: none;
+}
+
+.evo-node.selected circle {
+    stroke: #2c3e50;
+    stroke-width: 3;
 }
 
 .evo-edge-label {

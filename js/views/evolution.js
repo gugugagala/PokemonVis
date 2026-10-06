@@ -87,7 +87,12 @@ PV.views.evolution = (function () {
         const graph = buildGraph(PV.state.evolution);
         const { children, parentOf } = graph;
 
-        if (!selected) selected = parentOf.size && children.has("Bulbasaur") ? "Bulbasaur" : Array.from(children.keys())[0];
+        const wanted = PV.selection.name;
+        if (wanted && (children.has(wanted) || parentOf.has(wanted))) {
+            selected = wanted;
+        } else if (!selected) {
+            selected = children.has("Bulbasaur") ? "Bulbasaur" : Array.from(children.keys())[0];
+        }
         const { set, root } = familyOf(selected, children, parentOf);
         const levels = layout([root], children);
 
@@ -159,6 +164,7 @@ PV.views.evolution = (function () {
             .enter()
             .append("g")
             .attr("class", "evo-node")
+            .classed("selected", d => PV.selection.name === d.name)
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .style("cursor", "pointer")
             .on("mouseover", function (d) {
@@ -173,7 +179,7 @@ PV.views.evolution = (function () {
             .on("click", function (d) {
                 selected = d.name;
                 if (menuSelect) menuSelect.property("value", d.name);
-                PV.renderActive();
+                PV.setSelection({ name: d.name });
             });
 
         node.append("circle")
@@ -234,7 +240,7 @@ PV.views.evolution = (function () {
         menuSelect = field.append("select")
             .on("change", function () {
                 selected = this.value;
-                PV.renderActive();
+                PV.setSelection({ name: this.value });
             });
         names.forEach(n => menuSelect.append("option").attr("value", n).text(n));
         if (selected) menuSelect.property("value", selected);

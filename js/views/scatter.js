@@ -127,12 +127,21 @@ PV.views.scatter = (function () {
                 d3.select(this).attr("r", radius(d));
                 hideTooltip();
             })
-            .on("click", d => PV.radar.show(d));
+            .on("click", d => {
+                PV.setSelection({ name: d.name });
+                PV.radar.show(d);
+            });
+
+        const sel = PV.selection;
+        dots.classed("dim", d => sel.type !== "ALL" && !d.types.includes(sel.type))
+            .classed("selected", d => sel.name === d.name);
 
         dots.transition()
             .duration(PV.TRANSITION)
             .ease(d3.easeCubicOut)
             .attr("r", radius);
+
+        dots.filter(d => sel.name === d.name).raise();
     }
 
     function drawLegend(svg, box) {
@@ -146,6 +155,12 @@ PV.views.scatter = (function () {
             .append("g")
             .attr("transform", (d, i) =>
                 `translate(${(i % box.cols) * LEGEND_ITEM_W},${Math.floor(i / box.cols) * LEGEND_ITEM_H})`);
+
+        items.classed("active", d => PV.selection.type === d)
+            .style("cursor", "pointer")
+            .on("click", d => {
+                PV.setSelection({ type: PV.selection.type === d ? "ALL" : d });
+            });
 
         items.append("circle")
             .attr("cx", 5).attr("cy", 6).attr("r", 5)
@@ -204,8 +219,35 @@ PV.views.scatter = (function () {
     function menu(menuEl) {
         const root = d3.select(menuEl);
         root.append("div").attr("class", "menu-title").text("散点图");
+
+        const typeField = root.append("div").attr("class", "menu-field");
+        typeField.append("label").text("属性筛选");
+        const typeSel = typeField.append("select").on("change", function () {
+            PV.setSelection({ type: this.value });
+        });
+        typeSel.append("option").attr("value", "ALL").text("全部");
+        PV.TYPE_ORDER.forEach(t => typeSel.append("option").attr("value", t).text(PV.typeLabel(t)));
+        typeSel.property("value", PV.selection.type);
+
+        const searchField = root.append("div").attr("class", "menu-field");
+        searchField.append("label").text("搜索宝可梦（回车查看雷达图）");
+        searchField.append("input").attr("type", "text").attr("list", "pokemon-datalist")
+            .attr("placeholder", "如: Pikachu")
+            .property("value", PV.selection.name || "")
+            .on("change", function () {
+                const p = PV.pokemonByName(this.value.trim());
+                if (p) {
+                    PV.setSelection({ name: p.name });
+                    PV.radar.show(p);
+                } else {
+                    PV.setSelection({ name: null });
+                }
+            });
+        const datalist = searchField.append("datalist").attr("id", "pokemon-datalist");
+        PV.state.pokemon.forEach(p => datalist.append("option").attr("value", p.name));
+
         root.append("div").attr("class", "menu-hint")
-            .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击任意宝可梦查看六维雷达图。");
+            .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击散点或图例可联动其他视图。");
     }
 
     return { label: "散点图", render, menu };
