@@ -33,7 +33,7 @@ PV.views.scatter = (function () {
             .attr("width", box.width)
             .attr("height", box.height);
 
-        tooltip = d3.select(container).append("div").attr("class", "tooltip");
+        tooltip = PV.createTooltip(container);
 
         if (!data.length) return;
 
@@ -122,12 +122,12 @@ PV.views.scatter = (function () {
             .style("cursor", "pointer")
             .on("mouseover", function (d) {
                 d3.select(this).attr("r", radius(d) * 1.6);
-                showTooltip(d);
+                tooltip.show(PV.pokemonCardFull(d));
             })
-            .on("mousemove", moveTooltip)
+            .on("mousemove", tooltip.move)
             .on("mouseout", function (d) {
                 d3.select(this).attr("r", radius(d));
-                hideTooltip();
+                tooltip.hide();
             })
             .on("click", d => {
                 PV.setSelection({ name: d.name });
@@ -172,50 +172,6 @@ PV.views.scatter = (function () {
             .attr("class", "legend-text")
             .attr("x", 15).attr("y", 10)
             .text(d => PV.typeLabel(d));
-    }
-
-    /* ---------------------------- Tooltip ---------------------------- */
-
-    function tooltipHtml(d) {
-        const badges = d.types
-            .map(t => `<span class="type-badge" style="background:${PV.TYPE_COLORS[t] || PV.FALLBACK_COLOR}">${PV.typeLabel(t)}</span>`)
-            .join("");
-
-        const stats = [
-            ["HP", d.hp], ["Attack", d.attack], ["Defense", d.defense],
-            ["Sp. Atk", d.spAtk], ["Sp. Def", d.spDef], ["Speed", d.speed]
-        ].map(([k, v]) => `<div class="stat-row"><span>${k}</span><b>${v}</b></div>`).join("");
-
-        return `<div class="tooltip-name">#${d.id} ${d.name}</div>` +
-            `<div class="tooltip-types">${badges}</div>` +
-            `<div class="tooltip-total">Total <b>${d.total}</b></div>` +
-            `<div class="tooltip-stats">${stats}</div>`;
-    }
-
-    function showTooltip(d) {
-        tooltip.html(tooltipHtml(d))
-            .transition().duration(150)
-            .style("opacity", 0.95);
-        moveTooltip(d);
-    }
-
-    function moveTooltip() {
-        const node = tooltip.node();
-        const tw = node.offsetWidth;
-        const th = node.offsetHeight;
-        const pageW = document.documentElement.clientWidth + window.scrollX;
-        const pageH = document.documentElement.clientHeight + window.scrollY;
-
-        let x = d3.event.pageX + 16;
-        let y = d3.event.pageY + 16;
-        if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
-        if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
-
-        tooltip.style("left", x + "px").style("top", y + "px");
-    }
-
-    function hideTooltip() {
-        tooltip.transition().duration(200).style("opacity", 0);
     }
 
     function menu(menuEl) {

@@ -106,7 +106,7 @@ PV.views.evolution = (function () {
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 
-        tooltip = d3.select(container).append("div").attr("class", "tooltip");
+        tooltip = PV.createTooltip(container);
 
         svg.append("text")
             .attr("class", "chart-title")
@@ -171,12 +171,13 @@ PV.views.evolution = (function () {
             .style("cursor", "pointer")
             .on("mouseover", function (d) {
                 d3.select(this).select("circle").attr("stroke", "#2c3e50").attr("stroke-width", 3);
-                showTooltip(d.name, d3.event.pageX, d3.event.pageY);
+                const p = pokemonByName(d.name);
+                tooltip.show(p ? PV.pokemonCard(p) : `<div class="tooltip-name">${d.name}</div>`);
             })
-            .on("mousemove", moveTooltip)
+            .on("mousemove", tooltip.move)
             .on("mouseout", function () {
                 d3.select(this).select("circle").attr("stroke", "#ffffff").attr("stroke-width", 2);
-                hideTooltip();
+                tooltip.hide();
             })
             .on("click", function (d) {
                 selected = d.name;
@@ -195,38 +196,6 @@ PV.views.evolution = (function () {
             .attr("text-anchor", "middle")
             .attr("y", 36)
             .text(d => d.name);
-    }
-
-    function cardHtml(p) {
-        const badges = p.types
-            .map(t => `<span class="type-badge" style="background:${PV.TYPE_COLORS[t] || PV.FALLBACK_COLOR}">${PV.typeLabel(t)}</span>`)
-            .join("");
-        return `<div class="tooltip-name">#${p.id} ${p.name}</div>` +
-            `<div class="tooltip-types">${badges}</div>` +
-            `<div class="tooltip-total">Total <b>${p.total}</b></div>`;
-    }
-
-    function showTooltip(name, pageX, pageY) {
-        const p = pokemonByName(name);
-        tooltip.html(p ? cardHtml(p) : `<div class="tooltip-name">${name}</div>`)
-            .transition().duration(120).style("opacity", 0.95);
-        moveTooltip();
-    }
-
-    function moveTooltip() {
-        const node = tooltip.node();
-        const tw = node.offsetWidth, th = node.offsetHeight;
-        const pageW = document.documentElement.clientWidth + window.scrollX;
-        const pageH = document.documentElement.clientHeight + window.scrollY;
-        let x = d3.event.pageX + 16;
-        let y = d3.event.pageY + 16;
-        if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
-        if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
-        tooltip.style("left", x + "px").style("top", y + "px");
-    }
-
-    function hideTooltip() {
-        tooltip.transition().duration(200).style("opacity", 0);
     }
 
     function menu(menuEl) {

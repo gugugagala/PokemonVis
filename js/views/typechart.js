@@ -39,7 +39,7 @@ PV.views.typechart = (function () {
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 
-        tooltip = d3.select(container).append("div").attr("class", "tooltip");
+        tooltip = PV.createTooltip(container);
 
         let activeHighlight = highlight;
         if (linkSelected && PV.selection.name) {
@@ -89,12 +89,15 @@ PV.views.typechart = (function () {
             .style("opacity", d => (isDim(d.attack, d.defense) ? 0.15 : 1))
             .on("mouseover", function (d) {
                 d3.select(this).attr("stroke", "#2c3e50").attr("stroke-width", 1.5);
-                showTooltip(d);
+                tooltip.show(
+                    `<div class="tooltip-name">${PV.typeLabel(d.attack)} → ${PV.typeLabel(d.defense)}</div>` +
+                    `<div>${d.mult} × ${MULT_LABELS[d.mult] || "一般"}</div>`
+                );
             })
-            .on("mousemove", moveTooltip)
+            .on("mousemove", tooltip.move)
             .on("mouseout", function () {
                 d3.select(this).attr("stroke", "#ffffff").attr("stroke-width", 0.5);
-                hideTooltip();
+                tooltip.hide();
             });
 
         /* 倍率符号 */
@@ -154,30 +157,6 @@ PV.views.typechart = (function () {
             .attr("fill", d => MULT_COLORS[d]).attr("stroke", "#cccccc");
         items.append("text").attr("x", 20).attr("y", 12).attr("class", "legend-text")
             .text(d => `${MULT_SYMBOL[d] || "1"} × ${MULT_LABELS[d]}`);
-    }
-
-    function showTooltip(d) {
-        tooltip.html(
-            `<div class="tooltip-name">${PV.typeLabel(d.attack)} → ${PV.typeLabel(d.defense)}</div>` +
-            `<div>${d.mult} × ${MULT_LABELS[d.mult] || "一般"}</div>`
-        ).transition().duration(120).style("opacity", 0.95);
-        moveTooltip();
-    }
-
-    function moveTooltip() {
-        const node = tooltip.node();
-        const tw = node.offsetWidth, th = node.offsetHeight;
-        const pageW = document.documentElement.clientWidth + window.scrollX;
-        const pageH = document.documentElement.clientHeight + window.scrollY;
-        let x = d3.event.pageX + 16;
-        let y = d3.event.pageY + 16;
-        if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
-        if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
-        tooltip.style("left", x + "px").style("top", y + "px");
-    }
-
-    function hideTooltip() {
-        tooltip.transition().duration(200).style("opacity", 0);
     }
 
     function menu(menuEl) {

@@ -36,7 +36,7 @@ PV.views.parallel = (function () {
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 
-        tooltip = d3.select(container).append("div").attr("class", "tooltip");
+        tooltip = PV.createTooltip(container);
 
         svg.append("text")
             .attr("class", "chart-title")
@@ -91,14 +91,14 @@ PV.views.parallel = (function () {
                     .raise()
                     .attr("stroke-width", 2.5)
                     .attr("opacity", 1);
-                showTooltip(d);
+                tooltip.show(PV.pokemonCard(d));
             })
-            .on("mousemove", moveTooltip)
+            .on("mousemove", tooltip.move)
             .on("mouseout", function (d) {
                 d3.select(this)
                     .attr("stroke-width", PV.selection.name === d.name ? 3 : 1.2)
                     .attr("opacity", PV.selection.name === d.name ? 1 : 0.12);
-                hideTooltip();
+                tooltip.hide();
             })
             .on("click", d => {
                 PV.setSelection({ name: d.name });
@@ -106,34 +106,6 @@ PV.views.parallel = (function () {
             });
 
         g.selectAll(".pc-line.selected").raise();
-    }
-
-    function showTooltip(p) {
-        const badge = p.types
-            .map(t => `<span class="type-badge" style="background:${PV.TYPE_COLORS[t] || PV.FALLBACK_COLOR}">${PV.typeLabel(t)}</span>`)
-            .join("");
-        tooltip.html(
-            `<div class="tooltip-name">#${p.id} ${p.name}</div>` +
-            `<div class="tooltip-types">${badge}</div>` +
-            `<div class="tooltip-total">Total <b>${p.total}</b></div>`
-        ).transition().duration(120).style("opacity", 0.95);
-        moveTooltip();
-    }
-
-    function moveTooltip() {
-        const node = tooltip.node();
-        const tw = node.offsetWidth, th = node.offsetHeight;
-        const pageW = document.documentElement.clientWidth + window.scrollX;
-        const pageH = document.documentElement.clientHeight + window.scrollY;
-        let x = d3.event.pageX + 16;
-        let y = d3.event.pageY + 16;
-        if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
-        if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
-        tooltip.style("left", x + "px").style("top", y + "px");
-    }
-
-    function hideTooltip() {
-        tooltip.transition().duration(200).style("opacity", 0);
     }
 
     function menu(menuEl) {

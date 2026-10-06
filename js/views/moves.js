@@ -46,7 +46,7 @@ PV.views.moves = (function () {
             .attr("width", PV.state.width)
             .attr("height", PV.state.height);
 
-        tooltip = d3.select(container).append("div").attr("class", "tooltip");
+        tooltip = PV.createTooltip(container);
 
         svg.append("text")
             .attr("class", "chart-title")
@@ -79,12 +79,12 @@ PV.views.moves = (function () {
             .style("cursor", "pointer")
             .on("mouseover", function (d) {
                 d3.select(this).select(".move-bar").attr("opacity", 1);
-                showTooltip(d);
+                tooltip.show(moveCard(d));
             })
-            .on("mousemove", moveTooltip)
+            .on("mousemove", tooltip.move)
             .on("mouseout", function () {
                 d3.select(this).select(".move-bar").attr("opacity", 0.85);
-                hideTooltip();
+                tooltip.hide();
             });
 
         rows.append("rect")
@@ -115,35 +115,15 @@ PV.views.moves = (function () {
             .text(d => d.power ? d.power : "—");
     }
 
-    function showTooltip(m) {
-        const badge = `<span class="type-badge" style="background:${PV.TYPE_COLORS[m.type] || PV.FALLBACK_COLOR}">${PV.typeLabel(m.type)}</span>`;
-        tooltip.html(
-            `<div class="tooltip-name">${m.name}</div>` +
-            `<div class="tooltip-types">${badge}<span class="move-cat">${m.category}</span></div>` +
+    function moveCard(m) {
+        return `<div class="tooltip-name">${m.name}</div>` +
+            `<div class="tooltip-types">${PV.typeBadges([m.type])}<span class="move-cat">${m.category}</span></div>` +
             `<div class="tooltip-stats">` +
             `<div class="stat-row"><span>威力</span><b>${m.power || "—"}</b></div>` +
             `<div class="stat-row"><span>命中</span><b>${m.accuracy || "—"}</b></div>` +
             `<div class="stat-row"><span>PP</span><b>${m.pp}</b></div>` +
             `</div>` +
-            (m.effect ? `<div class="tooltip-effect">${m.effect}</div>` : "")
-        ).transition().duration(120).style("opacity", 0.95);
-        moveTooltip();
-    }
-
-    function moveTooltip() {
-        const node = tooltip.node();
-        const tw = node.offsetWidth, th = node.offsetHeight;
-        const pageW = document.documentElement.clientWidth + window.scrollX;
-        const pageH = document.documentElement.clientHeight + window.scrollY;
-        let x = d3.event.pageX + 16;
-        let y = d3.event.pageY + 16;
-        if (x + tw > pageW - 10) x = d3.event.pageX - tw - 16;
-        if (y + th > pageH - 10) y = d3.event.pageY - th - 16;
-        tooltip.style("left", x + "px").style("top", y + "px");
-    }
-
-    function hideTooltip() {
-        tooltip.transition().duration(200).style("opacity", 0);
+            (m.effect ? `<div class="tooltip-effect">${m.effect}</div>` : "");
     }
 
     function menu(menuEl) {
