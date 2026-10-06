@@ -279,32 +279,25 @@ document.addEventListener("keydown", e => {
     if (e.key === "Escape") hideShare();
 });
 
-PV.renderTools = function (menu) {
-    const tools = document.createElement("div");
-    tools.className = "menu-tools";
+PV.renderToolbar = function () {
+    const host = document.getElementById("nav-tools");
+    if (!host || host.childElementCount) return;
 
-    const copy = document.createElement("button");
-    copy.type = "button";
-    copy.className = "tool-btn";
-    copy.textContent = "分享 / 复制链接";
-    copy.addEventListener("click", PV.showShare);
-    tools.appendChild(copy);
+    const make = (label, aria, handler) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tool-btn";
+        btn.textContent = label;
+        btn.setAttribute("aria-label", aria);
+        btn.addEventListener("click", handler);
+        return btn;
+    };
 
-    const csv = document.createElement("button");
-    csv.type = "button";
-    csv.className = "tool-btn";
-    csv.textContent = "导出 CSV";
-    csv.addEventListener("click", PV.exportCSV);
-    tools.appendChild(csv);
-
-    const png = document.createElement("button");
-    png.type = "button";
-    png.className = "tool-btn";
-    png.textContent = "导出 PNG";
-    png.addEventListener("click", PV.exportPNG);
-    tools.appendChild(png);
-
-    menu.appendChild(tools);
+    host.append(
+        make("分享", "分享当前状态并复制链接", PV.showShare),
+        make("CSV", "导出当前视图数据为 CSV", PV.exportCSV),
+        make("PNG", "导出当前图表为 PNG", PV.exportPNG)
+    );
 };
 
 PV.renderMenu = function () {
@@ -312,7 +305,6 @@ PV.renderMenu = function () {
     d3.select(menu).html("");
     if (PV.current && PV.current.menu) PV.current.menu(menu, PV.state);
     PV.renderChip();
-    PV.renderTools(menu);
 };
 
 PV.switchView = function (name) {
@@ -353,6 +345,7 @@ PV.init = function () {
     });
     window.addEventListener("resize", onResize);
     window.addEventListener("hashchange", restoreFromHash);
+    PV.renderToolbar();
 
     PV.loadData()
         .then(() => {
