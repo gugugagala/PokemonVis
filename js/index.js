@@ -151,7 +151,7 @@ function drawPlot(xScale, yScale) {
 let tooltip;
 /* 添加 tooltip 显示当前鼠标位置宝可梦的部分信息 */
 function plotTooltip() {
-    tooltip = d3.select(".vis-Chart").append('div')
+    tooltip = d3.select(".vis-chart").append('div')
         .attr("class", "tooltip")
         .style("opacity", 0)
         .style("background", "#e4edf8")
