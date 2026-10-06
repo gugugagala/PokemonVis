@@ -126,7 +126,8 @@ PV.views.scatter = (function () {
             .on("mouseout", function (d) {
                 d3.select(this).attr("r", radius(d));
                 hideTooltip();
-            });
+            })
+            .on("click", d => PV.radar.show(d));
 
         dots.transition()
             .duration(PV.TRANSITION)
@@ -200,5 +201,12 @@ PV.views.scatter = (function () {
         tooltip.transition().duration(200).style("opacity", 0);
     }
 
-    return { label: "散点图", render };
+    function menu(menuEl) {
+        const root = d3.select(menuEl);
+        root.append("div").attr("class", "menu-title").text("散点图");
+        root.append("div").attr("class", "menu-hint")
+            .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击任意宝可梦查看六维雷达图。");
+    }
+
+    return { label: "散点图", render, menu };
 })();

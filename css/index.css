@@ -121,6 +121,60 @@ body {
     text-align: center;
 }
 
+/* 雷达图浮层 */
+.radar-panel {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 300px;
+    padding: 14px 16px 16px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+    z-index: 20;
+}
+
+.radar-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: #999999;
+    cursor: pointer;
+}
+
+.radar-close:hover {
+    color: #333333;
+}
+
+.radar-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.radar-types {
+    margin-bottom: 4px;
+}
+
+.radar-body svg {
+    display: block;
+    margin: 0 auto;
+}
+
+.radar-axis-label {
+    font-size: 10px;
+    fill: #666666;
+}
+
+.radar-value {
+    font-size: 9px;
+    fill: #888888;
+}
+
 .vis-chart {
     margin-left: var(--menu-chart-width);
     height: var(--menu-chart-height);
