@@ -354,6 +354,27 @@ body {
     color: #8a9a97;
 }
 
+.selection-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #073b4c;
+    color: #ffffff;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.selection-chip button {
+    border: none;
+    background: none;
+    color: #ffffff;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+}
+
 /* Tooltip */
 .tooltip {
     position: absolute;

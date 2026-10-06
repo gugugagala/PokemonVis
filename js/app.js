@@ -43,10 +43,36 @@ PV.renderActive = function () {
     if (PV.current) PV.current.render(container, PV.state);
 };
 
+PV.renderChip = function () {
+    const menu = document.querySelector(".menu");
+    if (!menu) return;
+
+    let chip = menu.querySelector(".selection-chip");
+    if (!PV.selection.name) {
+        if (chip) chip.remove();
+        return;
+    }
+    if (!chip) {
+        chip = document.createElement("div");
+        chip.className = "selection-chip";
+        menu.prepend(chip);
+    }
+    chip.innerHTML = "";
+    const label = document.createElement("span");
+    label.textContent = "已选：" + PV.selection.name;
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.setAttribute("aria-label", "清除选择");
+    clear.textContent = "✕";
+    clear.addEventListener("click", () => PV.setSelection({ name: null }));
+    chip.append(label, clear);
+};
+
 PV.renderMenu = function () {
     const menu = document.querySelector(".menu");
     d3.select(menu).html("");
     if (PV.current && PV.current.menu) PV.current.menu(menu, PV.state);
+    PV.renderChip();
 };
 
 PV.switchView = function (name) {

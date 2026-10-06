@@ -34,6 +34,7 @@ PV.selection = { name: null, type: "ALL" };
 PV.setSelection = function (patch) {
     Object.assign(PV.selection, patch);
     if (typeof PV.renderActive === "function") PV.renderActive();
+    if (typeof PV.renderChip === "function") PV.renderChip();
     if (typeof PV.syncHash === "function") PV.syncHash();
 };
 
