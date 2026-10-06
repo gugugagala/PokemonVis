@@ -131,8 +131,20 @@ body {
     align-items: center;
 }
 
-.scatter-svg {
+.scatter-svg,
+.heatmap-svg,
+.evolution-svg,
+.moves-svg {
     display: block;
+}
+
+.axis-label {
+    font-size: 11px;
+    fill: #444444;
+}
+
+.cell {
+    cursor: pointer;
 }
 
 /* 网格线（置于坐标轴之下） */
