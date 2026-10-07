@@ -10,6 +10,14 @@ PV.views.scatter = (function () {
     const yAccessor = d => d.speed;
 
     let svg, tooltip;
+    let brushMode = false;
+
+    /* 依据当前属性筛选与数值区间，更新散点的 dim/selected 状态 */
+    function applyDotDim(dots) {
+        const sel = PV.selection;
+        dots.classed("dim", d => !PV.matchesRanges(d) || (sel.type !== "ALL" && !d.types.includes(sel.type)))
+            .classed("selected", d => sel.name === d.name);
+    }
 
     function layout(el) {
         const width = el.clientWidth;
@@ -55,9 +63,43 @@ PV.views.scatter = (function () {
 
         drawGrid(plot, xScale, yScale, box);
         drawAxes(plot, xScale, yScale, box);
-        drawDots(plot, xScale, yScale, rScale, data);
+        const dots = drawDots(plot, xScale, yScale, rScale, data);
         drawLegend(svg, box);
         drawTitle(svg);
+
+        if (brushMode) setupBrush(plot, xScale, yScale, dots, box);
+    }
+
+    /* HP（x）× Speed（y）矩形框选：把像素范围换算为数据区间写入共享筛选 */
+    function setupBrush(plot, xScale, yScale, dots, box) {
+        const brush = d3.brush()
+            .extent([[0, 0], [box.innerW, box.innerH]])
+            .on("end", function () {
+                const selection = d3.event.selection;
+                if (!selection) {
+                    delete PV.selection.ranges.hp;
+                    delete PV.selection.ranges.speed;
+                } else {
+                    const hp = selection.map(p => xScale.invert(p[0])).sort((a, b) => a - b);
+                    const speed = selection.map(p => yScale.invert(p[1])).sort((a, b) => a - b);
+                    PV.selection.ranges.hp = hp;
+                    PV.selection.ranges.speed = speed;
+                }
+                applyDotDim(dots);
+                PV.renderChip();
+                PV.syncHash();
+            });
+
+        const brushG = plot.append("g").attr("class", "brush scatter-brush").call(brush);
+
+        const hp = PV.selection.ranges.hp;
+        const speed = PV.selection.ranges.speed;
+        if (hp && speed) {
+            brush.move(brushG, [
+                [xScale(hp[0]), yScale(speed[1])],
+                [xScale(hp[1]), yScale(speed[0])]
+            ]);
+        }
     }
 
     function drawTitle(svg) {
@@ -134,16 +176,15 @@ PV.views.scatter = (function () {
                 PV.radar.show(d);
             });
 
-        const sel = PV.selection;
-        dots.classed("dim", d => !PV.matchesRanges(d) || (sel.type !== "ALL" && !d.types.includes(sel.type)))
-            .classed("selected", d => sel.name === d.name);
+        applyDotDim(dots);
 
         dots.transition()
             .duration(PV.TRANSITION)
             .ease(d3.easeCubicOut)
             .attr("r", radius);
 
-        dots.filter(d => sel.name === d.name).raise();
+        dots.filter(d => PV.selection.name === d.name).raise();
+        return dots;
     }
 
     function drawLegend(svg, box) {
@@ -203,6 +244,15 @@ PV.views.scatter = (function () {
             });
         const datalist = searchField.append("datalist").attr("id", "pokemon-datalist");
         PV.state.pokemon.forEach(p => datalist.append("option").attr("value", p.name));
+
+        const brushField = root.append("label").attr("class", "menu-checkbox");
+        brushField.append("input").attr("type", "checkbox")
+            .property("checked", brushMode)
+            .on("change", function () {
+                brushMode = this.checked;
+                PV.renderActive();
+            });
+        brushField.append("span").text("启用矩形框选（HP × Speed）");
 
         root.append("div").attr("class", "menu-hint")
             .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击散点或图例可联动其他视图，平行坐标的刷选也会在此高亮命中范围。");

@@ -285,6 +285,10 @@ body {
     background: #6d3f8f;
 }
 
+.scatter-brush .overlay {
+    cursor: crosshair;
+}
+
 /* 平行坐标 */
 .pc-line {
     opacity: 0.12;
