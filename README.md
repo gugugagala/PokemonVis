@@ -8,12 +8,12 @@
 
 ### 通用
 
-- **多数据集加载与清洗**：使用 `d3.csv` 并行加载宝可梦、技能、进化、属性克制四份数据（`Promise.all`）；数值字段转数字，并按 `#` + `Name` 去重、合并双属性为 `types` 数组。
+- **多数据集加载与清洗**：使用 `d3.csv` 并行加载宝可梦、技能、进化、属性克制、招式学习表五份数据（`Promise.all`）；数值字段转数字，并按 `#` + `Name` 去重、合并双属性为 `types` 数组。
 - **视图路由**：顶栏在多个视图间切换，左侧菜单承载各视图的筛选控件；切换与窗口缩放均自动重绘。
 - **跨视图联动**：共享「属性筛选」与「选中宝可梦」状态——散点/平行坐标/进化链互相同步高亮，选中即弹雷达图；侧栏顶部显示「已选」指示条可一键清除。
 - **状态可分享**：当前视图、属性筛选、选中宝可梦实时写入 URL `hash`，可复制分享，并支持前进/后退恢复。
-- **分享预览**：侧栏底部「分享 / 复制链接」打开预览卡片，展示当前图表缩略图与状态链接，一键复制。
-- **数据导出**：侧栏底部可将当前视图数据导出为 **CSV**（含 BOM，Excel 友好），或将当前图表导出为 **PNG**（内联计算样式、2× 高清、白色背景）。
+- **分享预览**：顶部工具栏「分享」打开预览卡片，展示当前图表缩略图与状态链接，一键复制。
+- **数据导出**：顶部工具栏可将当前视图数据导出为 **CSV**（含 BOM，Excel 友好），或将当前图表导出为 **PNG**（内联计算样式、2× 高清、白色背景）。
 - **属性配色**：全项目使用宝可梦官方属性色板；**交互提示框**展示编号、名称、属性徽章与六维种族值，并支持视口边缘自动翻转。
 - **可访问性**：语义化按钮导航（键盘 Enter/Space 切换、`aria-current`）、SVG `role="img"` + `aria-label`、雷达图 `role="dialog"` 与焦点管理、Esc 关闭、焦点可见样式。
 - **响应式 / 移动端**：窄屏下导航自动换行、侧栏堆叠于图表上方、雷达图全宽，无横向溢出。
@@ -25,7 +25,7 @@
 | 散点图 | `HP × Speed` 分布，属性着色、半径编码 `Total`，悬停提示、点击查看雷达图 |
 | 属性克制 | 18×18 热力图（攻击方 × 防御方），支持高亮攻击属性、隐藏 1× 效果、跟随所选宝可梦主属性、倍率图例 |
 | 进化链 | 自动定位所选宝可梦所属家族，分层树布局，标注进化方式/等级/条件，点击节点切换家族 |
-| 技能探索 | 技能名称搜索 + 属性/类别筛选 + 排序 + 按所选宝可梦属性过滤，横向条形图展示威力并附完整说明 |
+| 技能探索 | 搜索 + 属性/类别筛选 + 排序；可联动所选宝可梦的**属性技能**或**真实可学招式**（显示学习方式与等级），横向条形图展示威力 |
 | 平行坐标 | 六维种族值平行坐标，按属性筛选，悬停高亮、点击联动雷达图 |
 
 - **六维雷达图**：浮动面板，居中展示所选宝可梦六项种族值（按各属性全库极值归一化）。
@@ -48,13 +48,21 @@ PokemonVis/
 │   │   ├── evolution.js # 视图：进化链
 │   │   ├── moves.js     # 视图：技能探索器
 │   │   └── parallel.js  # 视图：平行坐标
-│   ├── d3.js           # D3.js v5 可视化库
-│   └── d3.min.js       # D3.js 压缩版
+│   └── d3.js           # D3.js v5 可视化库
 ├── data/
 │   ├── pokemon.csv     # 宝可梦种族值（编号/名称/属性/六维/总和）
 │   ├── moves.csv       # 技能（名称/属性/类别/威力/命中/PP/效果）
 │   ├── evolution.csv   # 进化链（进化前/进化后/等级/条件/方式）
-│   └── typechart.csv   # 属性克制表（攻击方/防御方/效果/倍率）
+│   ├── typechart.csv   # 属性克制表（攻击方/防御方/效果/倍率）
+│   └── learnsets.csv   # 招式学习表（宝可梦/招式/学习方式/等级）
+├── scripts/
+│   ├── serve.js        # 开发静态服务器（npm run serve）
+│   ├── static-server.js# 零依赖静态服务器（serve 与测试复用）
+│   └── build-learnsets.js # 从 @pkmn 生成 learnsets.csv
+├── tests/
+│   ├── unit/           # 单元测试（node:test）
+│   └── e2e/            # 端到端测试（playwright-core）
+├── package.json        # 脚本与开发依赖
 ├── jsconfig.json       # 编辑器类型提示（d3）
 └── README.md
 ```
@@ -67,6 +75,7 @@ PokemonVis/
 | `moves.csv` | 607 | `Name`, `Type`, `Cat.`, `Power`, `Acc.`, `PP`, `Effect`, `Prob. (%)` |
 | `evolution.csv` | 390 | `Evolving from`, `Evolving to`, `Level`, `Condition`, `Evolution Type` |
 | `typechart.csv` | 324 | `Attack`, `Defense`, `Effectiveness`, `Multiplier` |
+| `learnsets.csv` | 39234 | `pokemon`, `move`, `method`, `level`（来自 [PokeAPI](https://github.com/PokeAPI/pokeapi) / [@pkmn](https://github.com/pkmn/ps) 真实数据，覆盖 474 个物种） |
 
 > 注：`pokemon.csv` 中双属性宝可梦会拆分为多行（例如 Bulbasaur 同时出现 `GRASS` 与 `POISON` 两行）；本项目按 `#` + `Name` 去重（保留不同形态），并将双属性合并为 `types` 数组。
 
@@ -75,14 +84,28 @@ PokemonVis/
 项目为纯静态页面，无需构建步骤。因需通过 `fetch` 加载本地 CSV，需以 HTTP 服务方式访问（直接双击 `index.html` 会因跨域限制而加载失败）：
 
 ```bash
-# Python 3
-python3 -m http.server 8000
+# 方式一：项目内置零依赖静态服务器
+npm run serve            # http://localhost:8000（可用 PORT 指定端口）
 
-# 或 Node.js
-npx serve
+# 方式二：Python 3
+python3 -m http.server 8000
 ```
 
 浏览器打开 `http://localhost:8000` 即可查看可视化结果。
+
+## 开发与测试
+
+```bash
+npm install              # 安装开发依赖（playwright-core / @pkmn）
+npm run serve            # 启动本地服务器
+npm test                 # 运行全部测试（单元 + 端到端）
+npm run test:unit        # 仅单元测试（node:test，无需浏览器）
+npm run test:e2e         # 仅端到端测试（需可用 Chromium）
+npm run data:learnsets   # 重新从 @pkmn 生成 data/learnsets.csv
+```
+
+- 端到端测试默认自动探测 Playwright 缓存的 Chromium；也可通过环境变量 `PV_CHROMIUM` 指定浏览器路径。
+- 单元测试覆盖数据清洗纯函数；端到端测试覆盖页面加载、视图切换、深链接、提示框、learnset 联动与导出。
 
 ## 技术栈
 
@@ -107,3 +130,6 @@ npx serve
 - [x] 一键复制分享链接（含轻提示）
 - [x] 数据导出（当前视图 CSV / 图表 PNG）
 - [x] 分享预览卡片（内联缩略图 + 状态链接）
+- [x] 分享 / 导出按钮移至顶部工具栏
+- [x] 接入 npm 构建脚本与自动化测试（单元 + 端到端）
+- [x] 接入真实 learnset 数据，实现「宝可梦 ↔ 招式」精确映射
