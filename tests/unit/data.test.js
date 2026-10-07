@@ -4,7 +4,7 @@ const assert = require("node:assert");
 const path = require("path");
 
 require(path.join(__dirname, "..", "..", "js", "data.js"));
-const { parsePokemonRow, parseMoveRow, consolidatePokemon } = globalThis.PV.internal;
+const { parsePokemonRow, parseMoveRow, parseLearsetRow, consolidatePokemon } = globalThis.PV.internal;
 
 test("parsePokemonRow 解析数值并去除编号空白", () => {
     const row = parsePokemonRow({
@@ -27,6 +27,14 @@ test("parseMoveRow 空威力/命中按 0 处理", () => {
     const attack = parseMoveRow({ "Name": "Absorb", "Type": "GRASS", "Cat.": "Special", "Power": "20", "Acc.": "100", "PP": "25", "Effect": "..." });
     assert.strictEqual(attack.power, 20);
     assert.strictEqual(attack.accuracy, 100);
+});
+
+test("parseLearsetRow 解析等级与学习方式", () => {
+    const learn = parseLearsetRow({ "pokemon": "Charizard", "move": "Flamethrower", "method": "升级", "level": "30" });
+    assert.deepStrictEqual(learn, { pokemon: "Charizard", move: "Flamethrower", method: "升级", level: 30 });
+
+    const tm = parseLearsetRow({ "pokemon": "Charizard", "move": "Earthquake", "method": "招式学习器", "level": "" });
+    assert.strictEqual(tm.level, null);
 });
 
 test("consolidatePokemon 合并双属性并按 (# + Name) 去重", () => {

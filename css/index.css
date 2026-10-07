@@ -301,6 +301,14 @@ body {
     line-height: 1.4;
 }
 
+.tooltip-learn {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e0e0e0;
+    color: #073b4c;
+    font-weight: 600;
+}
+
 /* 坐标轴 */
 .axis path,
 .axis line {

@@ -5,11 +5,14 @@
   "description": "宝可梦数据可视化交互系统（D3.js）",
   "scripts": {
     "serve": "node scripts/serve.js",
+    "data:learnsets": "node scripts/build-learnsets.js",
     "test": "node --test \"tests/**/*.test.js\"",
     "test:unit": "node --test tests/unit/*.test.js",
     "test:e2e": "node --test tests/e2e/*.test.js"
   },
   "devDependencies": {
+    "@pkmn/data": "^0.10.5",
+    "@pkmn/dex": "^0.10.5",
     "playwright-core": "^1.63.0"
   }
 }

@@ -23,6 +23,8 @@
         moves: [],
         evolution: [],
         typechart: [],
+        learnsets: [],
+        learnsetIndex: new Map(),
         width: 0,
         height: 0,
         innerW: 0,
@@ -107,21 +109,49 @@
         };
     }
 
+    function parseLearsetRow(d) {
+        return {
+            pokemon: d["pokemon"],
+            move: d["move"],
+            method: d["method"],
+            level: d["level"] ? +d["level"] : null
+        };
+    }
+
     PV.loadData = function () {
         return Promise.all([
             root.d3.csv("./data/pokemon.csv", parsePokemonRow),
             root.d3.csv("./data/moves.csv", parseMoveRow),
             root.d3.csv("./data/evolution.csv"),
-            root.d3.csv("./data/typechart.csv")
-        ]).then(([pokemon, moves, evolution, typechart]) => {
+            root.d3.csv("./data/typechart.csv"),
+            root.d3.csv("./data/learnsets.csv", parseLearsetRow)
+        ]).then(([pokemon, moves, evolution, typechart, learnsets]) => {
             PV.state.pokemon = consolidatePokemon(pokemon);
             PV.state.moves = moves;
             PV.state.evolution = evolution;
             PV.state.typechart = typechart;
+            PV.state.learnsets = learnsets;
+
+            const index = new Map();
+            learnsets.forEach(row => {
+                if (!index.has(row.pokemon)) index.set(row.pokemon, []);
+                index.get(row.pokemon).push(row);
+            });
+            PV.state.learnsetIndex = index;
             PV.state.loaded = true;
         });
     };
 
+    /* 返回某只宝可梦可学的招式列表 [{ move, method, level }] */
+    PV.learnsetFor = function (name) {
+        return PV.state.learnsetIndex.get(name) || [];
+    };
+
+    PV.learnsetMove = function (pokemonName, moveName) {
+        const list = PV.state.learnsetIndex.get(pokemonName);
+        return list ? list.find(r => r.move === moveName) || null : null;
+    };
+
     /* 暴露内部纯函数供单元测试使用 */
-    PV.internal = { parsePokemonRow, parseMoveRow, consolidatePokemon };
+    PV.internal = { parsePokemonRow, parseMoveRow, parseLearsetRow, consolidatePokemon };
 })(typeof window !== "undefined" ? window : globalThis);

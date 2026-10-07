@@ -108,6 +108,40 @@ test("悬停散点显示提示框", async t => {
     await page.close();
 });
 
+test("技能视图可按所选宝可梦的真实可学招式联动", async t => {
+    const ctx = await openApp(t);
+    if (!ctx) return;
+    const { page } = ctx;
+
+    const learnsetRows = await page.evaluate(() => window.PV.state.learnsets.length);
+    assert.ok(learnsetRows > 30000, `learnset 数据应已加载，实际 ${learnsetRows}`);
+
+    await page.locator('.menu input[type="text"]').fill("Charizard");
+    await page.locator('.menu input[type="text"]').dispatchEvent("change");
+    await page.waitForTimeout(400);
+
+    await page.click('.nav-item[data-view="moves"]');
+    await page.waitForTimeout(500);
+
+    const linkSelect = page.locator(".menu-field", {
+        has: page.locator("label", { hasText: "关联所选宝可梦" })
+    }).locator("select");
+    await linkSelect.selectOption("learnset");
+    await page.waitForTimeout(500);
+
+    const subtitle = await page.locator(".moves-svg .chart-subtitle").textContent();
+    assert.ok(subtitle.includes("Charizard"), subtitle);
+    assert.ok(subtitle.includes("可学招式"), subtitle);
+
+    const matched = await page.evaluate(() => {
+        const m = /匹配 (\d+) 个技能/.exec(document.querySelector(".moves-svg .chart-subtitle").textContent);
+        return m ? Number(m[1]) : -1;
+    });
+    assert.ok(matched > 0 && matched < 300, `可学招式数应适中，实际 ${matched}`);
+
+    await page.close();
+});
+
 test("导出 CSV 触发下载且文件名正确", async t => {
     const ctx = await openApp(t);
     if (!ctx) return;

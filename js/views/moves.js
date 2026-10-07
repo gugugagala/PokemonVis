@@ -13,23 +13,39 @@ PV.views.moves = (function () {
         name: (a, b) => a.name.localeCompare(b.name)
     };
 
-    let linkSelected = false;
+    let linkMode = "none";
     let tooltip;
 
-    function selectedTypes() {
-        if (!linkSelected || !PV.selection.name) return null;
-        const p = PV.pokemonByName(PV.selection.name);
-        return p ? p.types : null;
+    /* 依据关联模式（不关联 / 属性 / 可学招式）返回筛选谓词 */
+    function linkPredicate() {
+        if (!PV.selection.name) return null;
+        if (linkMode === "type") {
+            const p = PV.pokemonByName(PV.selection.name);
+            if (!p) return null;
+            return m => p.types.includes(m.type);
+        }
+        if (linkMode === "learnset") {
+            const set = new Set(PV.learnsetFor(PV.selection.name).map(r => r.move));
+            if (!set.size) return () => false;
+            return m => set.has(m.name);
+        }
+        return null;
+    }
+
+    function scopeLabel() {
+        if (!PV.selection.name || linkMode === "none") return "";
+        const suffix = linkMode === "learnset" ? "可学招式" : "属性技能";
+        return `（${PV.selection.name} 的${suffix}）`;
     }
 
     function filtered() {
         const q = filters.search.trim().toLowerCase();
-        const selTypes = selectedTypes();
+        const predicate = linkPredicate();
         return PV.state.moves
             .filter(m =>
                 (filters.type === "ALL" || m.type === filters.type) &&
                 (filters.category === "ALL" || m.category === filters.category) &&
-                (!selTypes || selTypes.includes(m.type)) &&
+                (!predicate || predicate(m)) &&
                 (!q || m.name.toLowerCase().includes(q)))
             .sort(SORTERS[filters.sort]);
     }
@@ -53,11 +69,10 @@ PV.views.moves = (function () {
             .attr("x", 24).attr("y", 30)
             .text("技能探索器");
 
-        const scope = selectedTypes() ? `（${PV.selection.name} 的属性）` : "";
         svg.append("text")
             .attr("class", "chart-subtitle")
             .attr("x", 24).attr("y", 48)
-            .text(`匹配 ${all.length} 个技能${scope}${all.length > MAX_BARS ? `，显示前 ${MAX_BARS} 个` : ""}`);
+            .text(`匹配 ${all.length} 个技能${scopeLabel()}${all.length > MAX_BARS ? `，显示前 ${MAX_BARS} 个` : ""}`);
 
         if (!shown.length) {
             svg.append("text")
@@ -124,6 +139,13 @@ PV.views.moves = (function () {
     }
 
     function moveCard(m) {
+        let learn = "";
+        if (linkMode === "learnset" && PV.selection.name) {
+            const rec = PV.learnsetMove(PV.selection.name, m.name);
+            if (rec) {
+                learn = `<div class="tooltip-learn">${rec.method}${rec.level != null ? " · Lv." + rec.level : ""}</div>`;
+            }
+        }
         return `<div class="tooltip-name">${m.name}</div>` +
             `<div class="tooltip-types">${PV.typeBadges([m.type])}<span class="move-cat">${m.category}</span></div>` +
             `<div class="tooltip-stats">` +
@@ -131,6 +153,7 @@ PV.views.moves = (function () {
             `<div class="stat-row"><span>命中</span><b>${m.accuracy || "—"}</b></div>` +
             `<div class="stat-row"><span>PP</span><b>${m.pp}</b></div>` +
             `</div>` +
+            learn +
             (m.effect ? `<div class="tooltip-effect">${m.effect}</div>` : "");
     }
 
@@ -177,17 +200,18 @@ PV.views.moves = (function () {
             sortSel.append("option").attr("value", v).text(label));
         sortSel.property("value", filters.sort);
 
-        const link = root.append("label").attr("class", "menu-checkbox");
-        link.append("input").attr("type", "checkbox")
-            .property("checked", linkSelected)
-            .on("change", function () {
-                linkSelected = this.checked;
-                PV.renderActive();
-            });
-        link.append("span").text("仅显示所选宝可梦的属性技能");
+        const linkField = root.append("div").attr("class", "menu-field");
+        linkField.append("label").text("关联所选宝可梦");
+        const linkSel = linkField.append("select").on("change", function () {
+            linkMode = this.value;
+            PV.renderActive();
+        });
+        [["none", "不关联"], ["type", "仅该宝可梦属性"], ["learnset", "仅该宝可梦可学招式（真实数据）"]]
+            .forEach(([value, label]) => linkSel.append("option").attr("value", value).text(label));
+        linkSel.property("value", linkMode);
 
         root.append("div").attr("class", "menu-hint")
-            .text("在散点图选中宝可梦后勾选上方选项，可联动查看其属性技能。");
+            .text("在散点图选中宝可梦后，可联动查看其属性技能或真实可学招式（含学习方式与等级）。");
     }
 
     function exportData() {
