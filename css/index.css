@@ -14,20 +14,44 @@ body {
     --menu-chart-width: 15vw;
     --menu-chart-height: calc(100vh - var(--nav-height));
     --nav-width: 100vw;
-    --nav-height: 100px;
+    --nav-height: 64px;
+    --accent: #ee8130;
 }
 
 .nav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
     width: 100%;
     min-height: var(--nav-height);
     display: -webkit-flex;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
+    gap: 16px;
+    padding: 8px 18px;
     box-sizing: border-box;
-    background-color: blueviolet;
+    background: linear-gradient(135deg, #123647 0%, #0a2530 100%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    color: #ffffff;
+}
+
+.brand-icon {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.brand-name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
 }
 
 .nav-items {
@@ -35,47 +59,62 @@ body {
     flex: 1;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
 }
 
 .nav-tools {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
 }
 
 .nav-item {
     width: auto;
-    min-width: 92px;
-    height: 56px;
+    height: 40px;
     margin: 0;
-    padding: 0 14px;
+    padding: 0 18px;
     display: -webkit-flex;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #c0505e;
-    color: #ffffff;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.82);
     font-family: inherit;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
+    white-space: nowrap;
     border: none;
-    border-radius: 6px;
+    border-radius: 999px;
     cursor: pointer;
     user-select: none;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .nav-item:hover {
-    background-color: #a8414e;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
 }
 
 .nav-item.active {
-    background-color: #073b4c;
+    background: #ffffff;
+    color: #0a2530;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .nav-item:active {
     transform: scale(0.97);
+}
+
+/* 工具栏按钮在深色导航栏上以「幽灵按钮」呈现 */
+#nav-tools .tool-btn {
+    color: #ffffff;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+#nav-tools .tool-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .nav-item:focus-visible,
@@ -605,23 +644,31 @@ body {
         gap: 6px;
     }
 
+    .nav-brand {
+        flex: 0 0 auto;
+    }
+
+    .brand-name {
+        display: none;
+    }
+
     .nav-items {
         flex: 1 1 100%;
-        order: 2;
+        order: 1;
     }
 
     .nav-item {
         width: auto;
         flex: 1 1 30%;
         min-width: 0;
-        height: 40px;
+        height: 36px;
         padding: 0 8px;
         font-size: 13px;
     }
 
     .nav-tools {
-        flex: 1 1 100%;
-        order: 1;
+        flex: 1 1 auto;
+        order: 0;
         justify-content: flex-end;
     }
 
