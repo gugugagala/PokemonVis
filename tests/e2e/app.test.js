@@ -64,15 +64,15 @@ test("顶部工具栏包含 3 个操作按钮", async t => {
     if (!ctx) return;
     const { page } = ctx;
     assert.strictEqual(await page.locator("#nav-tools .tool-btn").count(), 3);
-    assert.strictEqual(await page.locator(".nav-items .nav-item").count(), 6);
+    assert.strictEqual(await page.locator(".nav-items .nav-item").count(), 7);
     await page.close();
 });
 
-test("五个视图均可切换并渲染内容", async t => {
+test("全部视图均可切换并渲染内容", async t => {
     const ctx = await openApp(t);
     if (!ctx) return;
     const { page, errors } = ctx;
-    for (const view of ["scatter", "typechart", "evolution", "moves", "parallel", "generation"]) {
+    for (const view of ["scatter", "typechart", "evolution", "moves", "parallel", "generation", "distribution"]) {
         await page.click(`.nav-item[data-view="${view}"]`);
         await page.waitForTimeout(450);
         const children = await page.locator(".vis-chart svg *").count();

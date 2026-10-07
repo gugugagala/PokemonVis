@@ -268,6 +268,11 @@ body {
     stroke-linecap: round;
 }
 
+/* 箱线图 */
+.box-whisker {
+    stroke-width: 1.5;
+}
+
 /* 平行坐标 */
 .pc-line {
     opacity: 0.12;
