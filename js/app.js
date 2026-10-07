@@ -47,25 +47,47 @@ PV.renderChip = function () {
     const menu = document.querySelector(".menu");
     if (!menu) return;
 
+    /* 选中宝可梦指示条 */
     let chip = menu.querySelector(".selection-chip");
     if (!PV.selection.name) {
         if (chip) chip.remove();
-        return;
+    } else {
+        if (!chip) {
+            chip = document.createElement("div");
+            chip.className = "selection-chip";
+            menu.prepend(chip);
+        }
+        chip.innerHTML = "";
+        const label = document.createElement("span");
+        label.textContent = "已选：" + PV.selection.name;
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.setAttribute("aria-label", "清除选择");
+        clear.textContent = "✕";
+        clear.addEventListener("click", () => PV.setSelection({ name: null }));
+        chip.append(label, clear);
     }
-    if (!chip) {
-        chip = document.createElement("div");
-        chip.className = "selection-chip";
-        menu.prepend(chip);
+
+    /* 数值刷选指示条 */
+    let range = menu.querySelector(".range-chip");
+    if (!PV.hasRanges()) {
+        if (range) range.remove();
+    } else {
+        if (!range) {
+            range = document.createElement("div");
+            range.className = "selection-chip range-chip";
+            menu.prepend(range);
+        }
+        range.innerHTML = "";
+        const label = document.createElement("span");
+        label.textContent = "刷选筛选：" + Object.keys(PV.selection.ranges).length + " 项";
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.setAttribute("aria-label", "清除刷选筛选");
+        clear.textContent = "✕";
+        clear.addEventListener("click", () => PV.clearRanges());
+        range.append(label, clear);
     }
-    chip.innerHTML = "";
-    const label = document.createElement("span");
-    label.textContent = "已选：" + PV.selection.name;
-    const clear = document.createElement("button");
-    clear.type = "button";
-    clear.setAttribute("aria-label", "清除选择");
-    clear.textContent = "✕";
-    clear.addEventListener("click", () => PV.setSelection({ name: null }));
-    chip.append(label, clear);
 };
 
 /* ------------------------------ 轻提示 ------------------------------ */

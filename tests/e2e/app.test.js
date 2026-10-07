@@ -97,6 +97,37 @@ test("深链接恢复视图与筛选状态", async t => {
     await page.close();
 });
 
+test("平行坐标刷选联动散点并生成筛选指示条", async t => {
+    const ctx = await openApp(t);
+    if (!ctx) return;
+    const { page, errors } = ctx;
+
+    await page.click('.nav-item[data-view="parallel"]');
+    await page.waitForTimeout(600);
+
+    const overlay = page.locator(".parallel-svg .brush .overlay").first();
+    const box = await overlay.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.25);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.6, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForTimeout(350);
+
+    assert.ok(await page.evaluate(() => window.PV.hasRanges()), "刷选后应存在区间筛选");
+    assert.strictEqual(await page.locator(".range-chip").count(), 1);
+
+    await page.click('.nav-item[data-view="scatter"]');
+    await page.waitForTimeout(500);
+    const dim = await page.locator(".vis-chart circle.dot.dim").count();
+    assert.ok(dim > 100, `散点应大量变暗以体现过滤，实际 ${dim}`);
+
+    await page.locator(".range-chip button").click();
+    await page.waitForTimeout(300);
+    assert.strictEqual(await page.locator(".range-chip").count(), 0);
+    assert.deepStrictEqual(errors, []);
+    await page.close();
+});
+
 test("悬停散点显示提示框", async t => {
     const ctx = await openApp(t);
     if (!ctx) return;

@@ -31,14 +31,34 @@
         innerH: 0
     };
 
-    /* 跨视图共享的选择状态：选中宝可梦名与属性筛选 */
-    PV.selection = { name: null, type: "ALL" };
+    /* 跨视图共享的选择状态：选中宝可梦名、属性筛选与数值刷选区间 */
+    PV.selection = { name: null, type: "ALL", ranges: {} };
 
     PV.setSelection = function (patch) {
         Object.assign(PV.selection, patch);
         if (typeof PV.renderActive === "function") PV.renderActive();
         if (typeof PV.renderChip === "function") PV.renderChip();
         if (typeof PV.syncHash === "function") PV.syncHash();
+    };
+
+    /* 是否命中所有数值刷选区间（用于跨视图联动过滤） */
+    PV.matchesRanges = function (p) {
+        const ranges = PV.selection.ranges;
+        for (const key in ranges) {
+            const [lo, hi] = ranges[key];
+            if (p[key] < lo || p[key] > hi) return false;
+        }
+        return true;
+    };
+
+    PV.hasRanges = function () {
+        return Object.keys(PV.selection.ranges).length > 0;
+    };
+
+    PV.clearRanges = function () {
+        PV.selection.ranges = {};
+        if (typeof PV.renderActive === "function") PV.renderActive();
+        if (typeof PV.renderChip === "function") PV.renderChip();
     };
 
     PV.pokemonByName = function (name) {

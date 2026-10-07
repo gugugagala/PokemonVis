@@ -273,6 +273,18 @@ body {
     stroke-width: 1.5;
 }
 
+/* 平行坐标刷选 */
+.brush .selection {
+    fill: #0a7ea4;
+    fill-opacity: 0.18;
+    stroke: #0a7ea4;
+    stroke-opacity: 0.55;
+}
+
+.range-chip {
+    background: #6d3f8f;
+}
+
 /* 平行坐标 */
 .pc-line {
     opacity: 0.12;

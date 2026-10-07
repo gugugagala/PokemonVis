@@ -135,7 +135,7 @@ PV.views.scatter = (function () {
             });
 
         const sel = PV.selection;
-        dots.classed("dim", d => sel.type !== "ALL" && !d.types.includes(sel.type))
+        dots.classed("dim", d => !PV.matchesRanges(d) || (sel.type !== "ALL" && !d.types.includes(sel.type)))
             .classed("selected", d => sel.name === d.name);
 
         dots.transition()
@@ -205,7 +205,7 @@ PV.views.scatter = (function () {
         PV.state.pokemon.forEach(p => datalist.append("option").attr("value", p.name));
 
         root.append("div").attr("class", "menu-hint")
-            .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击散点或图例可联动其他视图。");
+            .text("横轴 HP，纵轴 Speed，点大小表示种族值总和；点击散点或图例可联动其他视图，平行坐标的刷选也会在此高亮命中范围。");
     }
 
     function exportData() {
