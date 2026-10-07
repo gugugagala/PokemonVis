@@ -67,11 +67,28 @@
 
     /* ------------------------------ CSV 解析 ------------------------------ */
 
+    /* 由全国图鉴编号推断世代（1-9） */
+    function generationOf(id) {
+        const n = parseInt(String(id).split(".")[0], 10);
+        if (!n) return null;
+        if (n <= 151) return 1;
+        if (n <= 251) return 2;
+        if (n <= 386) return 3;
+        if (n <= 493) return 4;
+        if (n <= 649) return 5;
+        if (n <= 721) return 6;
+        if (n <= 809) return 7;
+        if (n <= 905) return 8;
+        return 9;
+    }
+
     function parsePokemonRow(d) {
+        const id = (d["#"] || "").trim();
         return {
-            id: (d["#"] || "").trim(),
+            id,
             name: d["Name"],
             type: d["Type"],
+            generation: generationOf(id),
             total: +d["Total"],
             hp: +d["HP"],
             attack: +d["Attack"],
@@ -153,5 +170,5 @@
     };
 
     /* 暴露内部纯函数供单元测试使用 */
-    PV.internal = { parsePokemonRow, parseMoveRow, parseLearsetRow, consolidatePokemon };
+    PV.internal = { parsePokemonRow, parseMoveRow, parseLearsetRow, consolidatePokemon, generationOf };
 })(typeof window !== "undefined" ? window : globalThis);

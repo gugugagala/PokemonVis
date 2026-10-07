@@ -4,7 +4,7 @@ const assert = require("node:assert");
 const path = require("path");
 
 require(path.join(__dirname, "..", "..", "js", "data.js"));
-const { parsePokemonRow, parseMoveRow, parseLearsetRow, consolidatePokemon } = globalThis.PV.internal;
+const { parsePokemonRow, parseMoveRow, parseLearsetRow, consolidatePokemon, generationOf } = globalThis.PV.internal;
 
 test("parsePokemonRow 解析数值并去除编号空白", () => {
     const row = parsePokemonRow({
@@ -27,6 +27,20 @@ test("parseMoveRow 空威力/命中按 0 处理", () => {
     const attack = parseMoveRow({ "Name": "Absorb", "Type": "GRASS", "Cat.": "Special", "Power": "20", "Acc.": "100", "PP": "25", "Effect": "..." });
     assert.strictEqual(attack.power, 20);
     assert.strictEqual(attack.accuracy, 100);
+});
+
+test("generationOf 依据图鉴编号推断世代", () => {
+    assert.strictEqual(generationOf("001"), 1);
+    assert.strictEqual(generationOf("151"), 1);
+    assert.strictEqual(generationOf("152"), 2);
+    assert.strictEqual(generationOf("413.1"), 4);
+    assert.strictEqual(generationOf("807"), 7);
+    assert.strictEqual(generationOf(""), null);
+});
+
+test("parsePokemonRow 附带 generation 字段", () => {
+    const row = parsePokemonRow({ "#": " 150", "Name": "Mewtwo", "Type": "PSYCHIC", "Total": "680", "HP": "106", "Attack": "110", "Defense": "90", "Special Attack": "154", "Special Defense": "90", "Speed": "130" });
+    assert.strictEqual(row.generation, 1);
 });
 
 test("parseLearsetRow 解析等级与学习方式", () => {

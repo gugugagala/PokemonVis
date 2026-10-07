@@ -257,8 +257,15 @@ body {
 .heatmap-svg,
 .evolution-svg,
 .moves-svg,
-.parallel-svg {
+.parallel-svg,
+.generation-svg,
+.distribution-svg {
     display: block;
+}
+
+.gen-line {
+    stroke-linejoin: round;
+    stroke-linecap: round;
 }
 
 /* 平行坐标 */
