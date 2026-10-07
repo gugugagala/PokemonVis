@@ -259,8 +259,14 @@ body {
 .moves-svg,
 .parallel-svg,
 .generation-svg,
-.distribution-svg {
+.distribution-svg,
+.chord-svg {
     display: block;
+}
+
+.chord-label {
+    font-size: 11px;
+    fill: #444444;
 }
 
 .gen-line {
