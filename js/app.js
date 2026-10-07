@@ -7,12 +7,31 @@ PV.currentName = null;
 
 /* --------------------- URL 状态（可作为分享链接） --------------------- */
 
+function encodeRanges(ranges) {
+    return Object.entries(ranges)
+        .map(([key, [lo, hi]]) => `${key}:${Math.round(lo)}-${Math.round(hi)}`)
+        .join(",");
+}
+
+function decodeRanges(value) {
+    const ranges = {};
+    if (!value) return ranges;
+    value.split(",").forEach(part => {
+        const [key, span] = part.split(":");
+        if (!key || !span) return;
+        const [lo, hi] = span.split("-").map(Number);
+        if (!Number.isNaN(lo) && !Number.isNaN(hi)) ranges[key] = [lo, hi];
+    });
+    return ranges;
+}
+
 function readHash() {
     const params = new URLSearchParams(location.hash.replace(/^#/, ""));
     return {
         view: params.get("view"),
         type: params.get("type"),
-        name: params.get("name")
+        name: params.get("name"),
+        ranges: decodeRanges(params.get("ranges"))
     };
 }
 
@@ -21,14 +40,16 @@ PV.syncHash = function () {
     if (PV.currentName) params.set("view", PV.currentName);
     if (PV.selection.type && PV.selection.type !== "ALL") params.set("type", PV.selection.type);
     if (PV.selection.name) params.set("name", PV.selection.name);
+    if (PV.hasRanges()) params.set("ranges", encodeRanges(PV.selection.ranges));
     const query = params.toString();
     history.replaceState(null, "", query ? "#" + query : location.pathname + location.search);
 };
 
 function restoreFromHash() {
-    const { view, type, name } = readHash();
+    const { view, type, name, ranges } = readHash();
     PV.selection.type = type || "ALL";
     PV.selection.name = name || null;
+    PV.selection.ranges = ranges || {};
     if (view && view !== PV.currentName && PV.views[view]) {
         PV.switchView(view);
     } else {
@@ -374,6 +395,7 @@ PV.init = function () {
             const restored = readHash();
             if (restored.type) PV.selection.type = restored.type;
             if (restored.name) PV.selection.name = restored.name;
+            PV.selection.ranges = restored.ranges || {};
             const start = restored.view && PV.views[restored.view] ? restored.view : "scatter";
             PV.switchView(start);
         })

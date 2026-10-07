@@ -134,6 +134,7 @@ PV.views.parallel = (function () {
                     }
                     applyRanges();
                     PV.renderChip();
+                    PV.syncHash();
                 });
 
             g.append("g")
