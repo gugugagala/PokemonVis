@@ -108,6 +108,10 @@ PV.views.parallel = (function () {
                 tooltip.hide();
             })
             .on("click", d => {
+                if (d3.event.shiftKey) {
+                    PV.compare.toggle(d.name);
+                    return;
+                }
                 PV.setSelection({ name: d.name });
                 PV.radar.show(d);
             });

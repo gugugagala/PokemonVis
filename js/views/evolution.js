@@ -180,6 +180,10 @@ PV.views.evolution = (function () {
                 tooltip.hide();
             })
             .on("click", function (d) {
+                if (d3.event.shiftKey) {
+                    PV.compare.toggle(d.name);
+                    return;
+                }
                 selected = d.name;
                 if (menuSelect) menuSelect.property("value", d.name);
                 PV.setSelection({ name: d.name });

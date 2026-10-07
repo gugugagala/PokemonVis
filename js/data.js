@@ -32,7 +32,7 @@
     };
 
     /* 跨视图共享的选择状态：选中宝可梦名、属性筛选与数值刷选区间 */
-    PV.selection = { name: null, type: "ALL", ranges: {} };
+    PV.selection = { name: null, type: "ALL", ranges: {}, compare: [] };
 
     PV.setSelection = function (patch) {
         Object.assign(PV.selection, patch);

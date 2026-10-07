@@ -109,6 +109,28 @@ PV.renderChip = function () {
         clear.addEventListener("click", () => PV.clearRanges());
         range.append(label, clear);
     }
+
+    /* 对比指示条 */
+    let compare = menu.querySelector(".compare-chip");
+    const compareCount = PV.selection.compare.length;
+    if (!compareCount) {
+        if (compare) compare.remove();
+    } else {
+        if (!compare) {
+            compare = document.createElement("div");
+            compare.className = "selection-chip compare-chip";
+            menu.prepend(compare);
+        }
+        compare.innerHTML = "";
+        const label = document.createElement("span");
+        label.textContent = "对比：" + compareCount + " 只";
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.setAttribute("aria-label", "清除对比");
+        clear.textContent = "✕";
+        clear.addEventListener("click", () => PV.compare.clear());
+        compare.append(label, clear);
+    }
 };
 
 /* ------------------------------ 轻提示 ------------------------------ */
